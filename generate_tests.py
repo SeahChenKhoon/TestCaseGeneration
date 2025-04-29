@@ -473,11 +473,15 @@ def _process_source_file(source_code_path, llm_prompt_executor, env_vars) -> Non
                                         env_vars.requirements_txt)
     savefile = SaveFile(Path(env_vars.source_dir), source_code_file.source_code_path)
     if should_generate_unit_test(source_code_file.source_code):
-        generated_unit_test_code  = _generate_unit_tests_from_source_code(
-            llm_prompt_executor,
-            prompt=env_vars.llm_generate_unit_tests_prompt,
-            source_code_file=source_code_file
-        )
+        if env_vars.read_from_unit_test == "1":
+            generated_unit_test_code = Path(env_vars.unit_test_file).read_text(encoding="utf-8")
+        else:
+            generated_unit_test_code  = _generate_unit_tests_from_source_code(
+                llm_prompt_executor,
+                prompt=env_vars.llm_generate_unit_tests_prompt,
+                source_code_file=source_code_file
+            )
+            
         savefile.save_file(Path(env_vars.generated_tests_dir), generated_unit_test_code)
         
         import_statement = prepare_import_statements(llm_prompt_executor, env_vars, source_code_file, generated_unit_test_code)
@@ -496,7 +500,6 @@ def _process_source_file(source_code_path, llm_prompt_executor, env_vars) -> Non
         failure_test_cases=""
         for idx, test_case in enumerate(all_test_cases_list, start=1):
             unit_test_component = UnitTestComponent(import_statement, pytest_fixtures, test_case)
-
             passed, ret_val = \
                 run_each_pytest_function_individually(idx, env_vars, unit_test_component, savefile, 
                                                       llm_prompt_executor, source_code_file)
@@ -553,6 +556,7 @@ def main() -> NoReturn:
                 "percentage_passed (%)": (passed_count / total_test_case * 100) if total_test_case > 0 else 0.0,
                 "remarks": remarks
             })
+
         test_stats_df = pd.DataFrame(test_stats)
         test_stats_df.index = test_stats_df.index + 1
        
