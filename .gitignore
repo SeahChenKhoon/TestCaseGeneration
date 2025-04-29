@@ -1,0 +1,16 @@
+.env
+tests/
+tests/__pycache__/
+tests/*.py
+.python-version
+generate_tests.py
+theory_evaluation/*
+theory_evaluation/__pycache__/
+theory_evaluation/evaluator/__pycache__/
+temp/__pycache__
+logs/output.log
+Error/*
+final/*
+temp/temp.py
+__pycache__/
+*.pyc
