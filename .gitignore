@@ -1,15 +1,16 @@
+# Ignore environment and Python cache files
 .env
-tests/
-tests/__pycache__/
-tests/*.py
 .python-version
-theory_evaluation/*
-theory_evaluation/__pycache__/
-theory_evaluation/evaluator/__pycache__/
-temp/__pycache__
-logs/output.log
-Error/*
-final/*
-temp/temp.py
 __pycache__/
 *.pyc
+
+# Ignore logs and temp files
+logs/
+temp/
+Error/
+final/
+unit_test.py
+
+# Ignore everything in tests and theory_evaluation except tracked files
+tests/
+theory_evaluation/
