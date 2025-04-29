@@ -5,7 +5,8 @@ IMPORT_MAP = {
     "patch": "from unittest.mock import patch",
     "mock_open": "from unittest.mock import mock_open",
     "mock": "from unittest import mock",
-    "AsyncMock": "from unittest.mock import AsyncMock"
+    "AsyncMock": "from unittest.mock import AsyncMock",
+    "MagicMock": "from unittest.mock import MagicMock"
 }
 
 class SourceCodeFile:
