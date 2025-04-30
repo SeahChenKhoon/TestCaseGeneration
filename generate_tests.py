@@ -541,6 +541,8 @@ def _process_source_file(source_code_path, llm_prompt_executor, env_vars) -> Non
             full_unit_tests += unit_test_component.pytest_fixtures + "\n\n"
         if success_test_cases:
             full_unit_tests += success_test_cases + "\n\n"
+        llm_parameter={"full_unit_tests": full_unit_tests}
+        full_unit_tests = llm_prompt_executor.execute_llm_prompt(env_vars.llm_format_test_code_prompt, llm_parameter)
         savefile.save_file(Path(env_vars.finalized_tests_dir), full_unit_tests)
         savefile.save_file(Path(env_vars.failed_tests_dir), failure_test_cases,file_extension=".log")
     else:
