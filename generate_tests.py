@@ -360,6 +360,7 @@ def run_each_pytest_function_individually(
             "requirements_txt": source_code_file.requirements_txt,
         }
         full_unit_test = llm_prompt_executor.execute_llm_prompt(env_vars.llm_resolve_non_orm_prompt, llm_parameter)
+        full_unit_test = update_patch_targets(full_unit_test, source_code_file.source_code_path)
         test_case = extract_test_case_from_test_cases(
             llm_prompt_executor, env_vars.llm_extract_test_cases_prompt, 
             full_unit_test,True)
@@ -460,6 +461,29 @@ def extract_test_case_from_test_cases(
     else:
         return all_test_cases_list
 
+
+def update_patch_targets(generated_unit_test_code: str, source_code_path: str) -> str:
+    """
+    Replace unqualified module references (like 'llm_handler') in quoted strings
+    (e.g. in @patch decorators) with fully qualified paths (e.g. 'theory_evaluation.llm_handler').
+
+    Args:
+        generated_unit_test_code (str): The generated test code.
+        source_code_path (str): Path to the module, e.g. 'theory_evaluation/llm_handler.py'.
+
+    Returns:
+        str: The updated unit test code.
+    """
+    path = Path(source_code_path).with_suffix("")  # Remove .py
+    full_module_path = ".".join(path.parts)
+    module_name = path.stem
+
+    # Match quoted strings that contain the bare module name, not already qualified
+    pattern = rf"(['\"])({module_name})(?=\.[^'\"]*)(?<!{re.escape(full_module_path)})(?=\.[^'\"]*\1)"
+
+    return re.sub(pattern, rf"\1{full_module_path}", generated_unit_test_code)
+
+
 def _process_source_file(source_code_path, llm_prompt_executor, env_vars) -> None:
     logger.info(f"\nStart Processing file: {source_code_path}")
     
@@ -481,8 +505,9 @@ def _process_source_file(source_code_path, llm_prompt_executor, env_vars) -> Non
                 prompt=env_vars.llm_generate_unit_tests_prompt,
                 source_code_file=source_code_file
             )
-            
         savefile.save_file(Path(env_vars.generated_tests_dir), generated_unit_test_code)
+        
+        generated_unit_test_code = update_patch_targets(generated_unit_test_code, source_code_file.source_code_path)
         
         import_statement = prepare_import_statements(llm_prompt_executor, env_vars, source_code_file, generated_unit_test_code)
         llm_parameter={"unit_test_code": generated_unit_test_code}
