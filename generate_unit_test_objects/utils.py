@@ -54,6 +54,7 @@ class EnvVarsLoader:
         self.llm_extract_pytest_fixture_prompt = os.getenv("LLM_EXTRACT_PYTEST_FIXTURE_PROMPT")
         self.llm_extract_test_cases_prompt = os.getenv("LLM_EXTRACT_TEST_CASES_PROMPT")
         self.llm_cleanup_prompt = os.getenv("LLM_CLEANUP_PROMPT")
+        self.llm_merge_imports_prompt = os.getenv("LLM_MERGE_IMPORTS_PROMPT")
         self.requirements_txt = Path("./requirements.txt").read_text(encoding="utf-8")
 
 class LLMPromptExecutor:
