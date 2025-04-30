@@ -382,14 +382,23 @@ def run_each_pytest_function_individually(
 def prepare_import_statements(llm_prompt_executor, env_vars, source_code_file, generated_unit_test_code):
     logger.info(f"prepare_import_statements starts")
     llm_parameter = {"source_code": source_code_file.source_code}
-    import_statements = llm_prompt_executor.execute_llm_prompt(
+    source_code_import_statements = llm_prompt_executor.execute_llm_prompt(
         env_vars.llm_extract_import_prompt, llm_parameter)
-    import_statements = convert_relative_to_absolute_imports(import_statements, source_code_file.source_code_path)
+    source_code_import_statements = convert_relative_to_absolute_imports(source_code_import_statements, source_code_file.source_code_path)
     function_names = extract_function_class_and_factory_assignments(source_code_file.source_code)
     dynamic_imports = construct_module_import(function_names, source_code_file.source_code_path)
+    source_code_import_statements += "\n" + dynamic_imports + "\n"
 
+    llm_parameter = {"source_code": generated_unit_test_code}
+    unit_test_import_statements = llm_prompt_executor.execute_llm_prompt(
+        env_vars.llm_extract_import_prompt, llm_parameter)
+
+    llm_parameter = {"source_code_import_statements": source_code_import_statements,
+                     "unit_test_import_statements": unit_test_import_statements}
+    import_statements = llm_prompt_executor.execute_llm_prompt(
+        env_vars.llm_merge_imports_prompt, llm_parameter)
     logger.info(f"prepare_import_statements completes")
-    return import_statements + "\n" + dynamic_imports + "\n"
+    return import_statements
 
 def should_generate_unit_test(code: str) -> bool:
     """
