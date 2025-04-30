@@ -17,9 +17,16 @@ class SourceCodeFile:
         self.requirements_txt = requirements_txt
 
 class UnitTestComponent:
-    def __init__(self, import_statement, pytest_fixtures, unit_test):
+    def __init__(self, import_statement):
         self.import_statement = import_statement
+        self.pytest_fixtures = ""
+        self.unit_test = ""
+        self.full_unit_test = ""
+
+    def set_pytest_fixtures(self, pytest_fixtures):
         self.pytest_fixtures = pytest_fixtures
+
+    def set_unit_test(self, unit_test):
         self.unit_test = unit_test
         self.full_unit_test = self.import_statement + "\n\n" + self.pytest_fixtures + "\n\n" + self.unit_test
 
@@ -32,3 +39,9 @@ class UnitTestComponent:
     def update_unit_test(self, unit_test) -> None:
         self.unit_test = unit_test
         self.full_unit_test = self.import_statement + "\n\n" + self.pytest_fixtures + "\n\n" + self.unit_test
+
+    def append_import(self, import_statement) -> None:
+        self.import_statement += f"\n{import_statement}"
+        self.full_unit_test = self.import_statement + "\n\n" + self.pytest_fixtures + "\n\n" + self.unit_test
+
+        
