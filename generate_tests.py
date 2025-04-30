@@ -312,7 +312,7 @@ def prepare_and_run_test_case(
 ) -> tuple[bool, str]:
     logger.info(f"prepare_and_run_test_case starts")
     
-    output_str = f"\nTEST CASE {idx} Retry {retry_count}\n---------------\n{full_unit_test}\n---------------\n\n"
+    output_str = f"\nTEST CASE {idx} Retry {retry_count} -- {source_code_path}\n---------------\n{full_unit_test}\n---------------\n\n"
 
     if os.path.exists(temp_test_path):
         os.remove(temp_test_path)
@@ -437,7 +437,8 @@ def _generate_unit_tests_from_source_code(
 
     llm_parameter = {"python_version": source_code_file.python_version, 
                      "requirements_txt": source_code_file.requirements_txt,
-                     "file_content": source_code_file.source_code
+                     "file_content": source_code_file.source_code,
+                     "module_path": source_code_file.module_path
                      }
     generated_unit_test_code = llm_prompt_executor.execute_llm_prompt(prompt, llm_parameter)
 
