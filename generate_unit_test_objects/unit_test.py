@@ -1,4 +1,5 @@
 from typing import Dict
+import re
 
 IMPORT_MAP = {
     "pytest": "import pytest",
@@ -32,10 +33,10 @@ class UnitTestComponent:
 
     def ensure_import_statements(self) -> None:
         for keyword, import_line in IMPORT_MAP.items():
-            if keyword in self.unit_test and import_line not in self.import_statement:
+            if (keyword in self.unit_test or keyword in self.pytest_fixtures) and import_line not in self.import_statement:
                 self.import_statement += f"\n{import_line}"
         self.full_unit_test = self.import_statement + "\n\n" + self.pytest_fixtures + "\n\n" + self.unit_test
-    
+
     def update_unit_test(self, unit_test) -> None:
         self.unit_test = unit_test
         self.full_unit_test = self.import_statement + "\n\n" + self.pytest_fixtures + "\n\n" + self.unit_test
