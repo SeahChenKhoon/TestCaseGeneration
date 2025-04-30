@@ -510,10 +510,13 @@ def _process_source_file(source_code_path, llm_prompt_executor, env_vars) -> Non
         generated_unit_test_code = update_patch_targets(generated_unit_test_code, source_code_file.source_code_path)
         
         import_statement = prepare_import_statements(llm_prompt_executor, env_vars, source_code_file, generated_unit_test_code)
+        unit_test_component = UnitTestComponent(import_statement)
         llm_parameter={"unit_test_code": generated_unit_test_code}
         pytest_fixtures = llm_prompt_executor.execute_llm_prompt(env_vars.llm_extract_pytest_fixture_prompt, llm_parameter)
-        if not pytest_fixtures.strip().startswith("@pytest_fixtures"):
-            pytest_fixtures = ""
+        if pytest_fixtures:
+            unit_test_component.set_pytest_fixtures(pytest_fixtures)
+            unit_test_component.append_import("\nimport pytest")
+        
         generated_unit_test_code = convert_relative_to_absolute_imports(generated_unit_test_code, source_code_file.source_code_path)
         all_test_cases_list = extract_test_case_from_test_cases(
             llm_prompt_executor, env_vars.llm_extract_test_cases_prompt, 
@@ -524,7 +527,7 @@ def _process_source_file(source_code_path, llm_prompt_executor, env_vars) -> Non
         success_test_cases=""
         failure_test_cases=""
         for idx, test_case in enumerate(all_test_cases_list, start=1):
-            unit_test_component = UnitTestComponent(import_statement, pytest_fixtures, test_case)
+            unit_test_component.set_unit_test(test_case)
             passed, ret_val = \
                 run_each_pytest_function_individually(idx, env_vars, unit_test_component, savefile, 
                                                       llm_prompt_executor, source_code_file)
