@@ -44,6 +44,7 @@ class EnvVarsLoader:
         self.required_imports = os.getenv("REQUIRED_IMPORTS")
         self.llm_temperature = os.getenv("LLM_TEMPERATURE")
         self.llm_classify_orm_prompt = os.getenv("LLM_CLASSIFY_ORM_PROMPT")
+        self.llm_format_test_code_prompt = os.getenv("LLM_FORMAT_TEST_CODE_PROMPT")
         self.llm_test_orm_prompt = os.getenv("LLM_TEST_ORM_PROMPT")
         self.llm_generate_unit_tests_prompt = os.getenv("LLM_GENERATE_UNIT_TESTS_PROMPT")
         self.llm_extract_import_prompt = os.getenv("LLM_EXTRACT_IMPORT_PROMPT")
