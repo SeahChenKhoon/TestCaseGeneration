@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Dict, Any, List, NoReturn, Union, Tuple, Optional
 
 from generate_unit_test_objects.utils import EnvVarsLoader, LLMPromptExecutor, SaveFile
+from models.settings import Settings
 from generate_unit_test_objects.unit_test import SourceCodeFile, UnitTestComponent
 
 os.makedirs("logs", exist_ok=True)
@@ -39,32 +40,35 @@ if logger.hasHandlers():
 # Add the file handler
 logger.addHandler(file_handler)
 
-def clean_test_environment(env_vars):
-    logger.info(f"clean_test_environment start")
-    temp_test_file = env_vars.temp_test_file
-    log_file = env_vars.log_file
-    test_dir = env_vars.generated_tests_dir
-    final_dir = env_vars.finalized_tests_dir
-    error_dir = env_vars.failed_tests_dir
-    
-    # Delete temp_test_file if it exists
-    if os.path.exists(Path(temp_test_file)):
-        os.remove(temp_test_file)
-    
-    os.makedirs(os.path.dirname(temp_test_file), exist_ok=True)
-    with open(temp_test_file, "w", encoding="utf-8") as f:
-        pass
+def clean_test_environment(settings) -> None:
+    """
+    Cleans and prepares the test environment by:
+    - Resetting temp test and log files
+    - Recreating directories for generated, finalized, and failed test files
 
-    os.makedirs(os.path.dirname(log_file), exist_ok=True)
-    with open(log_file, "w", encoding="utf-8") as f:
-        pass
+    Args:
+        settings: An object containing paths such as temp_test_file, log_file, 
+                  generated_tests_dir, finalized_tests_dir, and failed_tests_dir.
+    """
+    def _reset_file(file_path: str) -> None:
+        path = Path(file_path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("", encoding="utf-8")
 
-    # Recreate directories
-    for path in [test_dir, final_dir, error_dir]:
+    def _recreate_dir(dir_path: str) -> None:
+        path = Path(dir_path)
         shutil.rmtree(path, ignore_errors=True)
-        os.makedirs(path, exist_ok=True)
-    logger.info(f"clean_test_environment complete")
+        path.mkdir(parents=True, exist_ok=True)
 
+    _reset_file(settings.temp_test_file)
+    _reset_file(settings.log_file)
+
+    for dir_path in [
+        settings.generated_tests_dir,
+        settings.finalized_tests_dir,
+        settings.failed_tests_dir,
+    ]:
+        _recreate_dir(dir_path)
 
 def _initialize_llm(env_vars):
     logger.info(f"_initialize_llm start")
@@ -580,30 +584,48 @@ def _initialize_application():
         logger.error(f"Initialization failed: {e}")
         raise
 
+def pre_processing() -> Tuple['Settings', List[Path]]:
+    """
+    Executes initial setup steps before processing, including:
+    - Loading environment settings
+    - Cleaning up the test environment
+    - Scanning the source directory for Python files
 
+    Returns:
+        Tuple[Settings, List[Path]]: 
+            - An instance of the Settings class containing environment configuration.
+            - A list of Python source code files found in the configured source directory.
+    """
+    logger.info(f"pre_processing start")
+    # Read Settings
+    settings = Settings()
+    # Read Housekeep Prcocessing Folders
+    clean_test_environment(settings)
+    # Read directory
+    source_code_files = _get_python_files(settings.source_dir)
+    logger.info(f"pre_processing end")
+    return settings, source_code_files
 
 def main() -> NoReturn:
-    try:
-        env_vars, llm_prompt_executor, source_code_files = _initialize_application()
-        test_stats = []
+    settings, source_code_files = pre_processing() 
 
-        for source_code_file in source_code_files:
-            passed_count, total_test_case, remarks = _process_source_file(source_code_file, llm_prompt_executor, env_vars)
-            test_stats.append({
-                "filename": source_code_file,
-                "total_test_cases_passed": passed_count,
-                "total_test_cases": total_test_case,
-                "percentage_passed (%)": (passed_count / total_test_case * 100) if total_test_case > 0 else 0.0,
-                "remarks": remarks
-            })
+    test_stats = []
+    for source_code_file in source_code_files:
+        logger.info(f"Hello World - XXX")
 
-        test_stats_df = pd.DataFrame(test_stats)
-        test_stats_df.index = test_stats_df.index + 1
-       
-        logger.info("\n" + tabulate(test_stats_df, headers='keys', tablefmt='grid'))
-    except Exception:
-        raise
+    #     passed_count, total_test_case, remarks = _process_source_file(source_code_file, llm_prompt_executor, env_vars)
+    #     test_stats.append({
+    #         "filename": source_code_file,
+    #         "total_test_cases_passed": passed_count,
+    #         "total_test_cases": total_test_case,
+    #         "percentage_passed (%)": (passed_count / total_test_case * 100) if total_test_case > 0 else 0.0,
+    #         "remarks": remarks
+    #     })
 
+    # test_stats_df = pd.DataFrame(test_stats)
+    # test_stats_df.index = test_stats_df.index + 1
+    
+    # logger.info("\n" + tabulate(test_stats_df, headers='keys', tablefmt='grid'))
 
 
 if __name__ == "__main__":
