@@ -69,27 +69,27 @@ def run_initial_setup() -> Tuple['Settings', List[Path]]:
     settings = Settings()
     # Read Housekeep Prcocessing Folders
     clean_test_environment(settings)
-    # Read directory
-    source_code_files = _get_python_files(settings.source_dir)
     logger.info(f"run_initial_setup end")
-    return settings, source_code_files
+    return settings
 
-
-
+from TestPilot.biz.source_file_biz import SourceCodeBiz
 def main() -> NoReturn:
-    settings, source_code_files = run_initial_setup() 
+    settings = run_initial_setup() 
 
     test_stats = []
-    for source_code_file in source_code_files:
-        logger.info(f"Hello World - XXX")
+    logger.info(settings.source_dir_str)
+    source_dir_list = [path.strip() for path in settings.source_dir_str.split(",") if path]
+    # source_dir_list = [Path(path.strip()) for path in settings.source_dir_str.split(",") if path.strip()]
+    for source_dir in source_dir_list:
+        source_code_files = _get_python_files(source_dir)
+        for source_code_file in source_code_files:
+            source_code_file = SourceCodeBiz.process_source_file(source_code_file, settings)
+            logger.info(f"Hello World - Process Unit Test Case")
+    logger.info(f"Produce Report")
+
 
     # stats_df, headers='keys', tablefmt='grid'))
 
 
 if __name__ == "__main__":
-    try:
-        main()
-    except Exception as e:
-        logger.error(f"Unhandled error: {e}")
-    finally:
-        sys.exit(0)        
+    main()
