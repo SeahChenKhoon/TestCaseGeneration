@@ -64,14 +64,14 @@ def run_initial_setup() -> Tuple['Settings', List[Path]]:
             - An instance of the Settings class containing environment configuration.
             - A list of Python source code files found in the configured source directory.
     """
-    logger.info(f"pre_processing start")
+    logger.info(f"run_initial_setup start")
     # Read Settings
     settings = Settings()
     # Read Housekeep Prcocessing Folders
     clean_test_environment(settings)
     # Read directory
     source_code_files = _get_python_files(settings.source_dir)
-    logger.info(f"pre_processing end")
+    logger.info(f"run_initial_setup end")
     return settings, source_code_files
 
 
