@@ -11,12 +11,12 @@ class Settings:
         self.azure_openai_key = os.getenv("AZURE_OPENAI_KEY")
         self.azure_deployment_id = os.getenv("AZURE_DEPLOYMENT_ID")
         self.azure_api_version = os.getenv("AZURE_API_VERSION")
-        self.source_dir = os.getenv("SOURCE_DIR")
-        self.generated_tests_dir = os.getenv("GENERATED_TESTS_DIR")
-        self.finalized_tests_dir = os.getenv("FINALIZED_TESTS_DIR")
-        self.temp_test_file = os.getenv("TEMP_TEST_FILE")
-        self.log_file = os.getenv("LOG_FILE")
-        self.failed_tests_dir = os.getenv("FAILED_TESTS_DIR")
+        self.source_dir_str = os.getenv("SOURCE_DIR")
+        self.generated_tests_dir = Path(os.getenv("GENERATED_TESTS_DIR"))
+        self.finalized_tests_dir = Path(os.getenv("FINALIZED_TESTS_DIR"))
+        self.temp_test_file = Path(os.getenv("TEMP_TEST_FILE"))
+        self.log_file = Path(os.getenv("LOG_FILE"))
+        self.failed_tests_dir = Path(os.getenv("FAILED_TESTS_DIR"))
         self.model_name = os.getenv("MODEL_NAME")
         self.python_version = os.getenv("PYTHON_VERSION")
         self.max_num_tries = os.getenv("MAX_NUM_TRIES")
@@ -38,6 +38,5 @@ class Settings:
         self.llm_cleanup_prompt = os.getenv("LLM_CLEANUP_PROMPT")
         self.llm_merge_imports_prompt = os.getenv("LLM_MERGE_IMPORTS_PROMPT")
         self.requirements_txt = Path("./requirements.txt").read_text(encoding="utf-8")    
-
 
         
