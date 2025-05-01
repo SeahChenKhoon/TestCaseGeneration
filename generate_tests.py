@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Dict, Any, List, NoReturn, Union, Tuple, Optional
 
 from generate_unit_test_objects.utils import EnvVarsLoader, LLMPromptExecutor, SaveFile
-from models.settings import Settings
+from TestPilot.models.settings import Settings
 from generate_unit_test_objects.unit_test import SourceCodeFile, UnitTestComponent
 
 os.makedirs("logs", exist_ok=True)
