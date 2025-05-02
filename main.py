@@ -5,7 +5,7 @@ from typing import NoReturn, Tuple, List
 from pathlib import Path
 
 from TestPilot.logger import setup_logger 
-from TestPilot.settings import cls_Settings
+from TestPilot.common_helpers import cls_Settings
 from TestPilot.source_code import cls_SourceCode
 from TestPilot.test_cases import cls_Test_Cases
 
@@ -24,6 +24,7 @@ def clean_test_environment(cls_settings:cls_Settings) -> None:
 
     _reset_file(cls_settings.temp_test_file)
     _reset_file(cls_settings.log_file)
+    _reset_file(cls_settings.unit_test_file)
 
     for dir_path in [
         cls_settings.generated_tests_dir,
@@ -62,14 +63,14 @@ def main() -> NoReturn:
     test_stats = []
     logger.info(cls_settings.source_dir_str)
     source_dir_list = [path.strip() for path in cls_settings.source_dir_str.split(",") if path]
-    
+
+    cls_test_cases = cls_Test_Cases()    
     for source_dir in source_dir_list:
         source_code_dir = _get_python_files(source_dir)
         for source_code_file in source_code_dir:
             cls_sourcecode = cls_SourceCode(source_code_file, cls_settings)
             cls_sourcecode.process_source_file()
-            cls_test_cases = cls_Test_Cases()
-            cls_test_cases.process_test_cases(cls_sourcecode)
+            cls_test_cases.process_test_cases(cls_sourcecode, cls_settings)
     logger.info(f"Produce Report")
 
 if __name__ == "__main__":
