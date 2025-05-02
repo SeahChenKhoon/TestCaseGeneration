@@ -1,9 +1,10 @@
 # from pathlib import Path
 from TestPilot.logger import setup_logger 
 from TestPilot.source_code import cls_SourceCode
+from TestPilot.common_helpers import cls_Settings, LLMPromptExecutor
 
 import re
-# from TestPilot.settings import cls_Settings
+
 
 logger = setup_logger()
 from pathlib import Path
@@ -51,11 +52,31 @@ class cls_Test_Cases:
         return True
 
 
-    def process_test_cases(self, cls_source_code:cls_SourceCode) -> None:
+    def _generates_test_cases(self, cls_setting:cls_Settings, cls_source_code:cls_SourceCode):
+        if cls_setting.should_generate_tests:
+            logger.info(f"Hello World - 1")
+            generated_unit_test_code= Path(cls_setting.unit_test_file).read_text(encoding="utf-8")
+        else:
+            logger.info(f"Hello World - 2")
+            llm_parameter = {"python_version": cls_source_code.python_version, 
+                            "requirements_txt": cls_source_code.requirements_txt,
+                            "file_content": cls_source_code.source_code,
+                            "module_path": cls_source_code.module_path
+                            }
+            llm_prompt_executor = LLMPromptExecutor(cls_setting)
+            generated_unit_test_code = llm_prompt_executor.execute_llm_prompt(
+                cls_setting.llm_generate_unit_tests_prompt, llm_parameter)
+        return generated_unit_test_code
+
+
+
+    def process_test_cases(self, cls_source_code:cls_SourceCode, cls_settings:cls_Settings) -> None:
         logger.info(f"process_test_cases starts")
         remarks=""
         if self._should_generate_unit_test(cls_source_code.source_code):
-            logger.info(f"Generates test Codes")
+            # Generates Test Cases
+            generated_unit_test_code = self._generates_test_cases(cls_settings, cls_source_code)
+            logger.info(f"Hello World - generated_unit_test_code - {generated_unit_test_code}")
             logger.info(f"Derive Test Componenet")
             logger.info(f"Test Component Formatting")
             logger.info(f"process_source_file completes")
