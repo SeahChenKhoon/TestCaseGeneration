@@ -2,7 +2,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import os
 
-class Settings:
+class cls_Settings:
     def __init__(self):
         load_dotenv(override=True)
         self.llm_provider = os.getenv("LLM_PROVIDER")
