@@ -4,21 +4,14 @@ import sys
 from typing import NoReturn, Tuple, List
 from pathlib import Path
 
-from TestPilot.utils.logger import setup_logger 
-from TestPilot.models.settings import Settings
+from TestPilot.logger import setup_logger 
+from TestPilot.settings import cls_Settings
+from TestPilot.source_code import cls_SourceCode
+from TestPilot.test_cases import cls_Test_Cases
 
 logger = setup_logger()
 
-def clean_test_environment(settings) -> None:
-    """
-    Cleans and prepares the test environment by:
-    - Resetting temp test and log files
-    - Recreating directories for generated, finalized, and failed test files
-
-    Args:
-        settings: An object containing paths such as temp_test_file, log_file, 
-                  generated_tests_dir, finalized_tests_dir, and failed_tests_dir.
-    """
+def clean_test_environment(cls_settings:cls_Settings) -> None:
     def _reset_file(file_path: str) -> None:
         path = Path(file_path)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -29,13 +22,13 @@ def clean_test_environment(settings) -> None:
         shutil.rmtree(path, ignore_errors=True)
         path.mkdir(parents=True, exist_ok=True)
 
-    _reset_file(settings.temp_test_file)
-    _reset_file(settings.log_file)
+    _reset_file(cls_settings.temp_test_file)
+    _reset_file(cls_settings.log_file)
 
     for dir_path in [
-        settings.generated_tests_dir,
-        settings.finalized_tests_dir,
-        settings.failed_tests_dir,
+        cls_settings.generated_tests_dir,
+        cls_settings.finalized_tests_dir,
+        cls_settings.failed_tests_dir,
     ]:
         _recreate_dir(dir_path)
 
@@ -52,44 +45,32 @@ def _get_python_files(directory: str) -> List[Path]:
     return list(Path(directory).rglob("*.py"))
 
 
-def run_initial_setup() -> Tuple['Settings', List[Path]]:
-    """
-    Executes initial setup steps before processing, including:
-    - Loading environment settings
-    - Cleaning up the test environment
-    - Scanning the source directory for Python files
-
-    Returns:
-        Tuple[Settings, List[Path]]: 
-            - An instance of the Settings class containing environment configuration.
-            - A list of Python source code files found in the configured source directory.
-    """
+def run_initial_setup():
     logger.info(f"run_initial_setup start")
     # Read Settings
-    settings = Settings()
+    cls_settings = cls_Settings()
     # Read Housekeep Prcocessing Folders
-    clean_test_environment(settings)
+    clean_test_environment(cls_settings)
     logger.info(f"run_initial_setup end")
-    return settings
+    return cls_settings
 
-from TestPilot.biz.source_file_biz import SourceCodeBiz
+from TestPilot.source_code import cls_SourceCode
+
 def main() -> NoReturn:
-    settings = run_initial_setup() 
+    cls_settings = run_initial_setup() 
 
     test_stats = []
-    logger.info(settings.source_dir_str)
-    source_dir_list = [path.strip() for path in settings.source_dir_str.split(",") if path]
-    # source_dir_list = [Path(path.strip()) for path in settings.source_dir_str.split(",") if path.strip()]
+    logger.info(cls_settings.source_dir_str)
+    source_dir_list = [path.strip() for path in cls_settings.source_dir_str.split(",") if path]
+    
     for source_dir in source_dir_list:
-        source_code_files = _get_python_files(source_dir)
-        for source_code_file in source_code_files:
-            source_code_file = SourceCodeBiz.process_source_file(source_code_file, settings)
-            logger.info(f"Hello World - Process Unit Test Case")
+        source_code_dir = _get_python_files(source_dir)
+        for source_code_file in source_code_dir:
+            cls_sourcecode = cls_SourceCode(source_code_file, cls_settings)
+            cls_sourcecode.process_source_file()
+            cls_test_cases = cls_Test_Cases()
+            cls_test_cases.process_test_cases(cls_sourcecode)
     logger.info(f"Produce Report")
-
-
-    # stats_df, headers='keys', tablefmt='grid'))
-
 
 if __name__ == "__main__":
     main()
