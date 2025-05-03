@@ -1,7 +1,7 @@
 import shutil
 import sys
 
-from typing import NoReturn, Tuple, List
+from typing import NoReturn, List
 from pathlib import Path
 
 from TestPilot.logger import setup_logger 
