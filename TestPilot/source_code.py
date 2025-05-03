@@ -1,7 +1,5 @@
 from pathlib import Path
-# from TestPilot.logger import setup_logger
 from TestPilot.common_helpers import setup_logger, cls_Settings
-# from TestPilot.settings import cls_Settings
 
 logger = setup_logger()
 from pathlib import Path
