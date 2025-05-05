@@ -78,7 +78,7 @@ class cls_Settings:
         self.failed_tests_dir = Path(os.getenv("FAILED_TESTS_DIR"))
         self.model_name = os.getenv("MODEL_NAME")
         self.python_version = os.getenv("PYTHON_VERSION")
-        self.max_num_tries = os.getenv("MAX_NUM_TRIES")
+        self.max_num_tries = int(os.getenv("MAX_NUM_TRIES"))
         self.should_generate_tests = int(os.getenv("SHOULD_GENERATE_TESTS", "0")) > 0
         self.unit_test_file = os.getenv("UNIT_TEST_FILE")
         self.source_file = os.getenv("SOURCE_FILE")
@@ -146,20 +146,6 @@ class LLMPromptExecutor:
 
         raise ValueError(f"Unsupported provider: '{provider}'.")
 
-
-    # def initialize_llm(self, cls_setting: cls_Settings):
-    #     provider = cls_setting.llm_provider
-    #     client = self._get_llm_client(cls_setting)
-    #     model_arg = self._get_model_arguments(
-    #         provider=provider,
-    #         model_name=cls_setting.model_name,
-    #         azure_deployment_id=cls_setting.azure_deployment_id
-    #     )
-        
-    #     self.provider=client
-    #     self.model_arg=model_arg
-    #     self.llm_temperature=cls_setting.llm_temperature
-    #     return None
 
     def get_chat_completion(self, provider: Any, model: str, prompt: str, llm_temperature: float = 0.2) -> Any:
         """
