@@ -1,5 +1,5 @@
 from typing import List, Optional
-
+from pathlib import Path
 import re, os
 
 
@@ -8,14 +8,13 @@ from TestPilot.source_code import cls_SourceCode
 from TestPilot.common_helpers import cls_Settings, LLMPromptExecutor
 
 logger = setup_logger()
-from pathlib import Path
 
 class cls_Test_Cases:
     def __init__(self):
-        self.import_statement = ""
-        self.pytest_fixtures = ""
-        self.unit_test = ""
-        self.full_unit_test = ""
+        self.import_statement:str = ""
+        self.pytest_fixtures:str = ""
+        self.unit_test = []
+        self.remarks:str=""
 
     def _should_generate_unit_test(self,code: str) -> bool:
         """
@@ -56,7 +55,6 @@ class cls_Test_Cases:
         return True
 
     def convert_relative_to_absolute_imports(self, code: str, file_path: str) -> str:
-        logger.info(f"Update relative import start")
         file_path_obj = Path(file_path).with_suffix("")
         module_parts = list(file_path_obj.parts)
         pattern = re.compile(r"from\s+(\.+)([\w\.]*)\s+import\s+(\w+)")
@@ -78,7 +76,6 @@ class cls_Test_Cases:
 
             absolute_import = ".".join(base_parts)
             return f"from {absolute_import} import {imported_name}"
-        logger.info(f"Update relative import complete")
         return pattern.sub(replacer, code)
 
     def extract_function_class_and_factory_assignments(self, code: str) -> List[str]:
@@ -110,7 +107,6 @@ class cls_Test_Cases:
         Returns:
             str: Formatted import statement (e.g., 'from theory_evaluation.llm_utils import func1, func2').
         """
-        logger.info("construct_module_import starts")
 
         # Convert to dotted module path and remove .py extension
         module_path = os.path.splitext(source_code_path)[0].replace(os.sep, ".")
@@ -118,14 +114,12 @@ class cls_Test_Cases:
         names_str = ", ".join(function_names)
         import_line = f"from {module_path} import {names_str}"
 
-        logger.info("construct_module_import completes")
         return import_line
 
 
     def derive_import_statements(self, llm_prompt_executor:LLMPromptExecutor, 
                                   cls_setting:cls_Settings, cls_source_code:cls_SourceCode, 
                                   generated_unit_test_code:str):
-        logger.info(f"derive_import_statements starts")
         llm_parameter = {"source_code": cls_source_code.source_code}
         source_code_import_statements = llm_prompt_executor.execute_llm_prompt(
             cls_setting.llm_extract_import_prompt, llm_parameter)
@@ -145,7 +139,6 @@ class cls_Test_Cases:
                         "unit_test_import_statements": unit_test_import_statements}
         import_statements = llm_prompt_executor.execute_llm_prompt(
             cls_setting.llm_merge_imports_prompt, llm_parameter)
-        logger.info(f"derive_import_statements completes")
         return import_statements
 
 
@@ -163,6 +156,9 @@ class cls_Test_Cases:
                 cls_setting.llm_generate_unit_tests_prompt, llm_parameter)
             generated_unit_test_code = self.convert_relative_to_absolute_imports(
                 generated_unit_test_code, cls_source_code.source_code_file_path)
+            generated_unit_test_code = self.rewrite_module_references(
+                cls_source_code.source_code_file_path,
+                generated_unit_test_code)
         return generated_unit_test_code
 
     def derive_pytest_fixture(self, generated_unit_test_code:str, cls_setting:cls_Settings,
@@ -220,8 +216,39 @@ class cls_Test_Cases:
                                                 generated_unit_test_code, False)
         return test_cases
 
+    def rewrite_module_references(self, source_code_path: str, source_code: str) -> str:
+        """
+        Replaces all import-like references to the base module name (inferred from the filename)
+        with its fully qualified module path, while avoiding redundant prefixes like
+        'pkg.pkg.module' becoming just 'pkg.module'.
+
+        Args:
+            source_code_path (str): e.g., 'theory_evaluation/llm_handler.py'
+            source_code (str): Original source code string
+
+        Returns:
+            str: Updated source code with module name replaced by full dotted module path
+        """
+        path = Path(source_code_path)
+        if path.suffix == ".py":
+            path = path.with_suffix("")
+
+        module_path = ".".join(path.parts)  # e.g., 'theory_evaluation.llm_handler'
+        base_name = path.name              # e.g., 'llm_handler'
+        top_level_pkg = path.parts[0]      # e.g., 'theory_evaluation'
+
+        # Replace only word-boundary matches to avoid false positives
+        pattern = r'\b' + re.escape(base_name) + r'\b'
+        rewritten_code = re.sub(pattern, module_path, source_code)
+
+        # Clean up any redundant repeated package names, e.g., 'pkg.pkg.' => 'pkg.'
+        repeated_prefix = f"{top_level_pkg}.{top_level_pkg}."
+        cleaned_code = rewritten_code.replace(repeated_prefix, f"{top_level_pkg}.")
+
+        return cleaned_code
+
+
     def process_test_cases(self, cls_source_code:cls_SourceCode, cls_settings:cls_Settings) -> None:
-        logger.info(f"process_test_cases starts")
         remarks=""
         if self._should_generate_unit_test(cls_source_code.source_code):
             llm_prompt_executor = LLMPromptExecutor(cls_settings)
@@ -233,16 +260,10 @@ class cls_Test_Cases:
                                                             cls_source_code, cls_settings, 
                                                             llm_prompt_executor)
             for test_case in test_cases:
-                logger.info(f"Hello World - test_case - {test_case}")
-
-            logger.info(f"Test Component Formatting")
-            logger.info(f"process_source_file completes")
+                self.unit_test.append(test_case)
         else:
-            remarks = "Skipped (config/models/imports only)"
+            self.remarks = "Skipped (config/models/imports only)"
             logger.warning(f"Skipping unit test generation for {cls_source_code.source_code_path} \
                            as it only contains configuration, models, or pure imports.")
-
-        return remarks
-        logger.info(f"process_test_cases completes")
-        return None
+        return self
 
