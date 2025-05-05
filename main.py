@@ -1,7 +1,7 @@
 import shutil
 import pandas as pd
 
-from typing import NoReturn, List
+from typing import NoReturn, List, Optional
 from pathlib import Path
 from tabulate import tabulate
 
@@ -55,6 +55,41 @@ def _run_initial_setup():
     return cls_settings
 
 
+def _process_test_result(
+    source_dir: str,
+    cls_sourcecode,
+    cls_settings,
+    success_unit_test: str,
+    passed_count: int,
+    overall_error_msg: Optional[str] = None
+) -> None:
+    """
+    Processes the test result by saving successful and failed test outputs.
+
+    Args:
+        source_dir (str): Source directory path.
+        cls_sourcecode: Source code object with source_code_file_path attribute.
+        cls_settings: Settings object with finalized_tests_dir and failed_tests_dir attributes.
+        success_unit_test (str): The successful unit test code.
+        passed_count (int): Number of passed test cases.
+        overall_error_msg (Optional[str]): Combined error message from failed tests, if any.
+    """
+    savefile = SaveFile(source_dir, cls_sourcecode.source_code_file_path)
+
+    if passed_count > 0:
+        savefile.save_file(Path(cls_settings.finalized_tests_dir), success_unit_test)
+        is_passed, err_msg = cls_TestResult(1, success_unit_test).run_unit_test(cls_settings, cls_sourcecode)
+        if not is_passed:
+            logger.error(f"Error when compiling code - {err_msg}")
+
+    if overall_error_msg:
+        savefile.save_file(
+            Path(cls_settings.failed_tests_dir),
+            overall_error_msg,
+            prefix="err_",
+            file_extension=".log"
+        )
+
 
 def main() -> NoReturn:
     cls_settings = _run_initial_setup() 
@@ -70,7 +105,6 @@ def main() -> NoReturn:
         
         for source_code_file in source_code_dir:
             cls_sourcecode = cls_SourceCode(source_code_file, cls_settings)
-            savefile = SaveFile(source_dir, cls_sourcecode.source_code_file_path)
             cls_test_cases.process_test_cases(cls_sourcecode, cls_settings)
             success_unit_test=cls_test_cases.import_statement + "\n\n" + \
                 cls_test_cases.pytest_fixtures
@@ -81,10 +115,9 @@ def main() -> NoReturn:
                     cls_test_cases.pytest_fixtures + "\n\n" + test_case
                 cls_test_result_list, error_msg_unit_case = cls_TestResult(idx, full_test_case).\
                     process_test_result(cls_test_cases, cls_settings, cls_sourcecode)
-                last_test_result:cls_TestResult=cls_test_result_list[-1]
-                if last_test_result.is_passed:
+                if cls_test_result_list[-1].is_passed:
                     passed_count+=1
-                    success_unit_test+=cls_test_cases.unit_test[idx-1] + "\n\n"
+                    success_unit_test+=cls_test_cases.unit_test[-1] + "\n\n"
                 else:
                     overall_error_msg+=error_msg_unit_case
 
@@ -95,14 +128,8 @@ def main() -> NoReturn:
                 "percentage_passed (%)": (passed_count / idx * 100) if idx > 0 else 0.0,
                 "remarks": cls_test_cases.remarks
             })
-            if passed_count > 0:
-                savefile.save_file(Path(cls_settings.finalized_tests_dir), success_unit_test)
-                is_passed, err_msg=cls_TestResult(1,success_unit_test).run_unit_test(cls_settings, cls_sourcecode)
-                if not is_passed:
-                    logger.error(f"Error when compiling code - {err_msg}")
-                            
-            if overall_error_msg:
-                savefile.save_file(Path(cls_settings.failed_tests_dir), overall_error_msg, prefix="err_", file_extension=".log")
+            _process_test_result(source_dir, cls_sourcecode, cls_settings,
+                                 success_unit_test, passed_count,overall_error_msg)
         test_stats_df = pd.DataFrame(test_stats)
         test_stats_df.index = test_stats_df.index + 1
         logger.info("\n" + tabulate(test_stats_df, headers='keys', tablefmt='grid'))
