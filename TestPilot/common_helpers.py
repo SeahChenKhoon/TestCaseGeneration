@@ -147,7 +147,7 @@ class LLMPromptExecutor:
         raise ValueError(f"Unsupported provider: '{provider}'.")
 
 
-    def get_chat_completion(self, provider: Any, model: str, prompt: str, llm_temperature: float = 0.2) -> Any:
+    def _get_chat_completion(self, provider: Any, model: str, prompt: str, llm_temperature: float = 0.2) -> Any:
         """
         Sends a prompt to the chat model and returns the response.
 
@@ -166,7 +166,7 @@ class LLMPromptExecutor:
             temperature=llm_temperature,
         )
 
-    def strip_markdown_fences(self, text: str) -> str:
+    def _strip_markdown_fences(self, text: str) -> str:
         """
         Removes all Markdown-style triple backtick fences from LLM output.
         Logs a warning if any stripping was performed.
@@ -194,7 +194,7 @@ class LLMPromptExecutor:
         llm_parameter: dict,
     ) -> str:
         formatted_prompt = llm_import_prompt.format(**llm_parameter)
-        response = self.get_chat_completion(self.provider, self.model_arg, formatted_prompt, self.llm_temperature)
-        return self.strip_markdown_fences(response.choices[0].message.content.strip())
+        response = self._get_chat_completion(self.provider, self.model_arg, formatted_prompt, self.llm_temperature)
+        return self._strip_markdown_fences(response.choices[0].message.content.strip())
     
     
