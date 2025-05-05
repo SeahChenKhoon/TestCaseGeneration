@@ -5,15 +5,14 @@ from typing import NoReturn, List
 from pathlib import Path
 from tabulate import tabulate
 
-from TestPilot.logger import setup_logger 
-from TestPilot.common_helpers import cls_Settings, SaveFile
+from TestPilot.common_helpers import cls_Settings, SaveFile, setup_logger
 from TestPilot.source_code import cls_SourceCode
 from TestPilot.test_cases import cls_Test_Cases
 from TestPilot.test_result import cls_TestResult
 
 logger = setup_logger()
 
-def clean_test_environment(cls_settings:cls_Settings) -> None:
+def _clean_test_environment(cls_settings:cls_Settings) -> None:
     def _reset_file(file_path: str) -> None:
         path = Path(file_path)
         path.parent.mkdir(parents=True, exist_ok=True)
@@ -48,19 +47,18 @@ def _get_python_files(directory: str) -> List[Path]:
     return list(Path(directory).rglob("*.py"))
 
 
-def run_initial_setup():
+def _run_initial_setup():
     # Read Settings
     cls_settings = cls_Settings()
     # Read Housekeep Prcocessing Folders
-    clean_test_environment(cls_settings)
+    _clean_test_environment(cls_settings)
     return cls_settings
 
 
 
 def main() -> NoReturn:
-    cls_settings = run_initial_setup() 
-    
-    
+    cls_settings = _run_initial_setup() 
+
     logger.info(cls_settings.source_dir_str)
     source_dir_list = [path.strip() for path in cls_settings.source_dir_str.split(",") if path]
 
