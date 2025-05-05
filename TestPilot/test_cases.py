@@ -3,9 +3,9 @@ from pathlib import Path
 import re, os
 
 
-from TestPilot.logger import setup_logger 
+# from TestPilot.logger import setup_logger 
 from TestPilot.source_code import cls_SourceCode
-from TestPilot.common_helpers import cls_Settings, LLMPromptExecutor
+from TestPilot.common_helpers import cls_Settings, LLMPromptExecutor, setup_logger
 
 logger = setup_logger()
 
@@ -54,7 +54,7 @@ class cls_Test_Cases:
         # Otherwise, yes, meaningful code — generate unit test
         return True
 
-    def convert_relative_to_absolute_imports(self, code: str, file_path: str) -> str:
+    def _convert_relative_to_absolute_imports(self, code: str, file_path: str) -> str:
         file_path_obj = Path(file_path).with_suffix("")
         module_parts = list(file_path_obj.parts)
         pattern = re.compile(r"from\s+(\.+)([\w\.]*)\s+import\s+(\w+)")
@@ -78,7 +78,7 @@ class cls_Test_Cases:
             return f"from {absolute_import} import {imported_name}"
         return pattern.sub(replacer, code)
 
-    def extract_function_class_and_factory_assignments(self, code: str) -> List[str]:
+    def _extract_function_class_and_factory_assignments(self, code: str) -> List[str]:
         # Match top-level (not indented) functions
         function_names = re.findall(
             r'^(?:async\s+)?def\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*\(', code, re.MULTILINE
@@ -95,7 +95,7 @@ class cls_Test_Cases:
 
         return sorted(set(function_names + class_names + factory_assignments))
 
-    def construct_module_import(self, function_names: List[str], source_code_path: str) -> str:
+    def _construct_module_import(self, function_names: List[str], source_code_path: str) -> str:
         """
         Generates a dynamic import statement based on the provided function names
         and source file path.
@@ -117,17 +117,17 @@ class cls_Test_Cases:
         return import_line
 
 
-    def derive_import_statements(self, llm_prompt_executor:LLMPromptExecutor, 
+    def _derive_import_statements(self, llm_prompt_executor:LLMPromptExecutor, 
                                   cls_setting:cls_Settings, cls_source_code:cls_SourceCode, 
                                   generated_unit_test_code:str):
         llm_parameter = {"source_code": cls_source_code.source_code}
         source_code_import_statements = llm_prompt_executor.execute_llm_prompt(
             cls_setting.llm_extract_import_prompt, llm_parameter)
-        source_code_import_statements = self.convert_relative_to_absolute_imports(
+        source_code_import_statements = self._convert_relative_to_absolute_imports(
             source_code_import_statements, cls_source_code.source_code_file_path)
-        function_names = self.extract_function_class_and_factory_assignments(
+        function_names = self._extract_function_class_and_factory_assignments(
             cls_source_code.source_code)
-        dynamic_imports = self.construct_module_import(function_names, 
+        dynamic_imports = self._construct_module_import(function_names, 
                                                        cls_source_code.source_code_file_path)
         source_code_import_statements += "\n" + dynamic_imports + "\n"
 
@@ -154,23 +154,23 @@ class cls_Test_Cases:
                             }
             generated_unit_test_code = llm_prompt_executor.execute_llm_prompt(
                 cls_setting.llm_generate_unit_tests_prompt, llm_parameter)
-            generated_unit_test_code = self.convert_relative_to_absolute_imports(
+            generated_unit_test_code = self._convert_relative_to_absolute_imports(
                 generated_unit_test_code, cls_source_code.source_code_file_path)
-            generated_unit_test_code = self.rewrite_module_references(
+            generated_unit_test_code = self._rewrite_module_references(
                 cls_source_code.source_code_file_path,
                 generated_unit_test_code)
         return generated_unit_test_code
 
-    def derive_pytest_fixture(self, generated_unit_test_code:str, cls_setting:cls_Settings,
+    def _derive_pytest_fixture(self, generated_unit_test_code:str, cls_setting:cls_Settings,
                               llm_prompt_executor:LLMPromptExecutor):
         llm_parameter={"unit_test_code": generated_unit_test_code}
         pytest_fixtures = llm_prompt_executor.execute_llm_prompt(
             cls_setting.llm_extract_pytest_fixture_prompt, llm_parameter)
         if pytest_fixtures:
-            self.set_pytest_fixtures(pytest_fixtures)
+            self._set_pytest_fixtures(pytest_fixtures)
             self.import_statement += "\nimport pytest"
 
-    def extract_test_functions(self,code: str) -> List[str]:
+    def _extract_test_functions(self,code: str) -> List[str]:
         """
         Extracts all test functions (including decorators like @pytest.mark.asyncio)
         from the provided Python source code and returns them as a list of strings.
@@ -186,7 +186,7 @@ class cls_Test_Cases:
         return [match.group().strip() for match in pattern.finditer(code)]
 
 
-    def extract_test_case_from_test_cases(
+    def _extract_test_case_from_test_cases(
         self, llm_prompt_executor,
         prompt,
         generated_unit_test_code: str,
@@ -197,26 +197,26 @@ class cls_Test_Cases:
             prompt,
             llm_parameter
         )
-        all_test_cases_list = self.extract_test_functions(all_test_cases_str)
+        all_test_cases_list = self._extract_test_functions(all_test_cases_str)
         if output_one_case:
             return all_test_cases_list[0]
         else:
             return all_test_cases_list
 
 
-    def build_unit_test_code(self, generated_unit_test_code: str, 
+    def _build_unit_test_code(self, generated_unit_test_code: str, 
                              cls_source_code: cls_SourceCode, cls_setting:cls_Settings, 
                              llm_prompt_executor:LLMPromptExecutor) -> str:
-        self.import_statement = self.derive_import_statements(llm_prompt_executor, cls_setting, 
+        self.import_statement = self._derive_import_statements(llm_prompt_executor, cls_setting, 
                                                           cls_source_code, generated_unit_test_code)
-        self.derive_pytest_fixture(generated_unit_test_code,cls_setting, llm_prompt_executor)
+        self._derive_pytest_fixture(generated_unit_test_code,cls_setting, llm_prompt_executor)
         
-        test_cases = self.extract_test_case_from_test_cases(llm_prompt_executor, 
+        test_cases = self._extract_test_case_from_test_cases(llm_prompt_executor, 
                                                cls_setting.llm_extract_test_cases_prompt, 
                                                 generated_unit_test_code, False)
         return test_cases
 
-    def rewrite_module_references(self, source_code_path: str, source_code: str) -> str:
+    def _rewrite_module_references(self, source_code_path: str, source_code: str) -> str:
         """
         Replaces all import-like references to the base module name (inferred from the filename)
         with its fully qualified module path, while avoiding redundant prefixes like
@@ -256,7 +256,7 @@ class cls_Test_Cases:
             generated_unit_test_code = self._generates_test_cases(cls_source_code, cls_settings, 
                                                                   llm_prompt_executor)
             # Build unit test component
-            test_cases = self.build_unit_test_code(generated_unit_test_code,
+            test_cases = self._build_unit_test_code(generated_unit_test_code,
                                                             cls_source_code, cls_settings, 
                                                             llm_prompt_executor)
             for test_case in test_cases:
