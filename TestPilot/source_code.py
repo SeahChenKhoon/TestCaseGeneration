@@ -11,10 +11,9 @@ class cls_SourceCode:
         self.python_version = settings.python_version
         self.requirements_txt = settings.requirements_txt
         self.module_path=".".join(Path(self.source_code_file_path).with_suffix("").parts)
+        self.process_source_file()
 
     def process_source_file(self) -> None:
-        logger.info(f"process_source_file starts")
         # Read source code
         self.source_code = self.source_code_file_path.read_text(encoding="utf-8")
-        logger.info(f"process_source_file completes")
         return None
