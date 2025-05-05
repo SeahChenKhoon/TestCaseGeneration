@@ -91,7 +91,7 @@ class cls_Settings:
         self.llm_extract_import_prompt = os.getenv("LLM_EXTRACT_IMPORT_PROMPT")
         self.llm_unique_import_prompt = os.getenv("LLM_UNIQUE_IMPORT_PROMPT")
         self.llm_resolve_orm_prompt = os.getenv("LLM_RESOLVE_ORM_PROMPT")
-        self.llm_resolve_non_orm_prompt = os.getenv("LLM_RESOLVE_NON_ORM_PROMPT")
+        self.llm_resolve_prompt = os.getenv("LLM_RESOLVE_PROMPT")
         self.llm_extract_pytest_fixture_prompt = os.getenv("LLM_EXTRACT_PYTEST_FIXTURE_PROMPT")
         self.llm_extract_test_cases_prompt = os.getenv("LLM_EXTRACT_TEST_CASES_PROMPT")
         self.llm_cleanup_prompt = os.getenv("LLM_CLEANUP_PROMPT")
