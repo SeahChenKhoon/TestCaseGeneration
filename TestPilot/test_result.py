@@ -2,10 +2,9 @@ import os, re, subprocess
 from pathlib import Path
 from typing import Tuple, List, NoReturn
 
-from TestPilot.common_helpers import cls_Settings, LLMPromptExecutor, SaveFile
+from TestPilot.common_helpers import cls_Settings, LLMPromptExecutor, SaveFile, setup_logger
 from TestPilot.source_code import cls_SourceCode
 from TestPilot.test_cases import cls_Test_Cases
-from TestPilot.logger import setup_logger 
 
 logger = setup_logger()
 
@@ -40,7 +39,7 @@ class cls_TestResult:
             err_msg = result.stdout.strip()
         return passed, err_msg
 
-    def resolve_unit_test_error(self, cls_source_code:cls_SourceCode, 
+    def _resolve_unit_test_error(self, cls_source_code:cls_SourceCode, 
                                 cls_settings:cls_Settings):
         llm_prompt_executor = LLMPromptExecutor(cls_settings)
         llm_parameter = {
@@ -54,7 +53,7 @@ class cls_TestResult:
     
         return full_unit_test
 
-    def print_test_result(self, retry_count: int, 
+    def _print_test_result(self, retry_count: int, 
                           file_path: str) -> str:
         divider = "=" * 80
         section_break = "-" * 80
@@ -83,16 +82,16 @@ class cls_TestResult:
             self.is_passed, self.error_msg = \
                 self.run_unit_test(cls_settings, cls_source_code)
 
-            test_report=self.print_test_result(retry_count, cls_source_code.source_code_file_path)
+            test_report=self._print_test_result(retry_count, cls_source_code.source_code_file_path)
             logger.info(test_report)
             overall_error_msg+=test_report
             test_result_list.append(self)
             
             retry_count += 1
             if not self.is_passed:
-                full_unit_test = self.resolve_unit_test_error(cls_source_code, cls_settings)
+                full_unit_test = self._resolve_unit_test_error(cls_source_code, cls_settings)
                 llm_prompt_executor = LLMPromptExecutor(cls_settings)
-                test_case = cls_test_cases.extract_test_case_from_test_cases(llm_prompt_executor, 
+                test_case = cls_test_cases._extract_test_case_from_test_cases(llm_prompt_executor, 
                                                     cls_settings.llm_extract_test_cases_prompt, 
                                                         full_unit_test, True)
                 cls_test_cases.unit_test[self.test_case_no-1]=test_case
