@@ -261,9 +261,11 @@ class cls_Test_Cases:
                                                             llm_prompt_executor)
             for test_case in test_cases:
                 self.unit_test.append(test_case)
+            self.remarks = ""
         else:
             self.remarks = "Skipped (config/models/imports only)"
-            logger.warning(f"Skipping unit test generation for {cls_source_code.source_code_path} \
-                           as it only contains configuration, models, or pure imports.")
+            logger.warning(f"Skipping unit test generation for " 
+                           f"{cls_source_code.source_code_file_path}" 
+                           " as it only contains configuration, models, or pure imports.")
         return self
 
