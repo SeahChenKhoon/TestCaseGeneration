@@ -108,6 +108,9 @@ class cls_TestResult(cls_Test_Cases):
             if not self.is_passed:
                 retry_count += 1
                 full_unit_test = self._resolve_unit_test_error(cls_source_code, cls_settings)
+                full_unit_test = self._rewrite_module_references(
+                    cls_source_code.source_code_file_path,
+                    full_unit_test)
                 llm_prompt_executor = LLMPromptExecutor(cls_settings)
                 self._build_unit_test_code(full_unit_test, cls_source_code, cls_settings, 
                                                llm_prompt_executor)
