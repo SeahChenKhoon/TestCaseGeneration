@@ -1,7 +1,7 @@
 import shutil
 import pandas as pd
 
-from typing import NoReturn, List, Optional
+from typing import List, Optional
 from pathlib import Path
 from tabulate import tabulate
 
@@ -46,7 +46,7 @@ def _get_python_files(directory: str) -> List[Path]:
     return list(Path(directory).rglob("*.py"))
 
 
-def _run_initial_setup():
+def _run_initial_setup()->cls_Settings:
     # Read Settings
     cls_settings = cls_Settings()
     # Read Housekeep Prcocessing Folders
@@ -116,13 +116,13 @@ def create_successful_test_result(cls_test_cases: cls_Test_Cases) -> cls_TestRes
     success_test_case = cls_Test_Cases()
     success_test_case.import_statement = cls_test_cases.import_statement
     success_test_case.pytest_fixtures = cls_test_cases.pytest_fixtures
-    success_test_case.unit_test = [""]  # One empty unit test as string
+    success_test_case.unit_test = [""]  
 
     successful_test_result = cls_TestResult(0, success_test_case)
     return successful_test_result
 
 
-def main() -> NoReturn:
+def main() -> None:
     cls_settings = _run_initial_setup() 
     source_dir_list = [path.strip() for path in cls_settings.source_dir_str.split(",") if path]
     cls_test_cases = cls_Test_Cases()
@@ -148,6 +148,7 @@ def main() -> NoReturn:
                 error_msg_unit_case: Optional[str]
                 total_test_case=len(cls_test_cases.unit_test)
                 cls_test_result = cls_TestResult(test_case_no, cls_test_cases)
+
                 test_result_list, error_msg_unit_case = \
                     cls_test_result.process_test_cases(cls_settings, cls_source_code)
 
