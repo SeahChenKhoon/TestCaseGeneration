@@ -1,6 +1,6 @@
 import os, re, subprocess
 from pathlib import Path
-from typing import Tuple, List, NoReturn
+from typing import Tuple, List, Optional
 
 from TestPilot.common_helpers import cls_Settings, LLMPromptExecutor, SaveFile, setup_logger
 from TestPilot.source_code import cls_SourceCode
@@ -8,7 +8,7 @@ from TestPilot.test_cases import cls_Test_Cases
 
 logger = setup_logger()
 
-class cls_TestResult(cls_Test_Cases):
+class cls_TestResult():
     def __init__(self, test_case_no:int, cls_test_cases:cls_Test_Cases):
         self.import_statement:str = cls_test_cases.import_statement
         self.pytest_fixtures:str = cls_test_cases.pytest_fixtures
@@ -45,7 +45,7 @@ class cls_TestResult(cls_Test_Cases):
         return passed, err_msg
 
     def _resolve_unit_test_error(self, cls_source_code:cls_SourceCode, 
-                                cls_settings:cls_Settings):
+                                cls_settings:cls_Settings)->str:
         llm_prompt_executor = LLMPromptExecutor(cls_settings)
         llm_parameter = {
             "source_code": cls_source_code.source_code,
@@ -93,7 +93,7 @@ class cls_TestResult(cls_Test_Cases):
 
 
     def process_test_cases(self, cls_settings:cls_Settings,  
-                            cls_source_code:cls_SourceCode)->NoReturn:
+                            cls_source_code:cls_SourceCode)->Tuple[List["cls_TestResult"], Optional[str]]:
         retry_count=0
         test_result_list:List[cls_TestResult]=[]
         overall_error_msg=""
