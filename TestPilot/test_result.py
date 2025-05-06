@@ -20,13 +20,13 @@ class cls_TestResult(cls_Test_Cases):
     def full_test_case(self) -> str:
         return f"{self.import_statement}\n\n{self.pytest_fixtures}\n\n{self.unit_test}"
 
-    def run_unit_test(self, cls_settings:cls_Settings, 
+    def run_unit_test(self, full_test_case:str, cls_settings:cls_Settings, 
                       cls_source_code:cls_SourceCode) -> Tuple[bool, str]:
         if os.path.exists(cls_settings.temp_test_file):
             os.remove(cls_settings.temp_test_file)
 
         cls_settings.temp_test_file.write_text(f"# {cls_source_code.source_code_file_path}\n" \
-                                               f"{self.full_test_case}", encoding="utf-8")
+                                               f"{full_test_case}", encoding="utf-8")
 
         env = os.environ.copy()
         env["PYTHONPATH"] = str(Path(".").resolve())
@@ -99,7 +99,7 @@ class cls_TestResult(cls_Test_Cases):
         overall_error_msg=""
         while retry_count <= cls_settings.max_num_tries and not self.is_passed:
             self._ensure_import_statements()
-            self.is_passed, self.error_msg = self.run_unit_test(cls_settings, cls_source_code)
+            self.is_passed, self.error_msg = self.run_unit_test(self.full_test_case, cls_settings, cls_source_code)
             test_report=self._print_test_result(retry_count, cls_source_code.source_code_file_path)
             logger.info(test_report)
             overall_error_msg+=test_report
