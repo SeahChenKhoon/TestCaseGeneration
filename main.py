@@ -25,7 +25,6 @@ def _clean_test_environment(cls_settings:cls_Settings) -> None:
 
     _reset_file(cls_settings.temp_test_file)
     _reset_file(cls_settings.log_file)
-    _reset_file(cls_settings.unit_test_file)
 
     for dir_path in [
         cls_settings.generated_tests_dir,
@@ -128,17 +127,15 @@ def main() -> NoReturn:
         passed_count=0
         test_stats=[]
         source_code_dir = _get_python_files(source_dir)
-
         for source_code_file in source_code_dir:
-            successful_test_result=create_successful_test_result(cls_test_cases)
             total_test_case=0
             overall_error_msg=""
             success_unit_test=""
 
             cls_source_code = cls_SourceCode(source_code_file, cls_settings)
             cls_test_cases.derive_test_cases(cls_source_code, cls_settings)
+            successful_test_result=create_successful_test_result(cls_test_cases)
             save_initial_test_cases(source_dir, cls_source_code, cls_settings, cls_test_cases)
-
             for test_case_no, _ in enumerate(cls_test_cases.unit_test):
                 total_test_case=len(cls_test_cases.unit_test)
                 cls_test_result = cls_TestResult(test_case_no, cls_test_cases)
@@ -147,11 +144,12 @@ def main() -> NoReturn:
 
                 if test_result_list[-1].is_passed:
                     passed_count+=1
-                    success_unit_test+=cls_test_cases.unit_test[-1] + "\n\n"
+                    success_unit_test+=test_result_list[-1].unit_test + "\n\n"
                 else:
                     overall_error_msg+=error_msg_unit_case
 
             successful_test_result.unit_test=success_unit_test
+            logger.info(f"Hello World - successful_test_result.unit_test - {successful_test_result.unit_test}")
             _process_and_save_test_results(source_dir, cls_source_code, cls_settings,
                                  successful_test_result, passed_count, overall_error_msg)
             test_stats.append({
