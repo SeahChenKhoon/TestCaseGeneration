@@ -55,30 +55,19 @@ def _run_initial_setup():
     return cls_settings
 
 
-def _process_test_result(
+def _process_and_save_test_results(
     source_dir: str,
-    cls_sourcecode,
-    cls_settings,
-    success_unit_test: str,
+    cls_sourcecode:cls_SourceCode,
+    cls_settings:cls_Settings,
+    successful_test_result:cls_TestResult,
     passed_count: int,
     overall_error_msg: Optional[str] = None
 ) -> None:
-    """
-    Processes the test result by saving successful and failed test outputs.
-
-    Args:
-        source_dir (str): Source directory path.
-        cls_sourcecode: Source code object with source_code_file_path attribute.
-        cls_settings: Settings object with finalized_tests_dir and failed_tests_dir attributes.
-        success_unit_test (str): The successful unit test code.
-        passed_count (int): Number of passed test cases.
-        overall_error_msg (Optional[str]): Combined error message from failed tests, if any.
-    """
     savefile = SaveFile(source_dir, cls_sourcecode.source_code_file_path)
 
     if passed_count > 0:
-        savefile.save_file(Path(cls_settings.finalized_tests_dir), success_unit_test)
-        is_passed, err_msg = cls_TestResult(1, success_unit_test).run_unit_test(cls_settings, cls_sourcecode)
+        savefile.save_file(Path(cls_settings.finalized_tests_dir), successful_test_result.full_test_case)
+        is_passed, err_msg = successful_test_result.run_unit_test(cls_settings, cls_sourcecode)
         if not is_passed:
             logger.error(f"Error when compiling code - {err_msg}")
 
@@ -104,32 +93,39 @@ def main() -> NoReturn:
         test_stats=[]
         
         for source_code_file in source_code_dir:
-            cls_sourcecode = cls_SourceCode(source_code_file, cls_settings)
-            cls_test_cases.process_test_cases(cls_sourcecode, cls_settings)
-            success_unit_test=cls_test_cases.import_statement + "\n\n" + \
-                cls_test_cases.pytest_fixtures
-            idx=0
+            cls_source_code = cls_SourceCode(source_code_file, cls_settings)
+            cls_test_cases.derive_test_cases(cls_source_code, cls_settings)
+            
+            success_test_case=cls_Test_Cases()
+            success_test_case.import_statement=cls_test_cases.import_statement
+            success_test_case.pytest_fixtures=cls_test_cases.pytest_fixtures
+            success_test_case.unit_test=[""]
+            success_unit_test=""
+            successful_test_result=cls_TestResult(0, success_test_case)
+
+            total_test_case=0
             overall_error_msg=""
-            for idx, test_case in enumerate(cls_test_cases.unit_test, start=1):
-                full_test_case = cls_test_cases.import_statement + "\n\n" + \
-                    cls_test_cases.pytest_fixtures + "\n\n" + test_case
-                cls_test_result_list, error_msg_unit_case = cls_TestResult(idx, full_test_case).\
-                    process_test_result(cls_test_cases, cls_settings, cls_sourcecode)
-                if cls_test_result_list[-1].is_passed:
+            for test_case_no, _ in enumerate(cls_test_cases.unit_test):
+                total_test_case=len(cls_test_cases.unit_test)
+                cls_test_result = cls_TestResult(test_case_no, cls_test_cases)
+                test_result_list, error_msg_unit_case = \
+                    cls_test_result.process_test_cases(cls_settings, cls_source_code)
+                if test_result_list[-1].is_passed:
                     passed_count+=1
                     success_unit_test+=cls_test_cases.unit_test[-1] + "\n\n"
                 else:
                     overall_error_msg+=error_msg_unit_case
 
+            successful_test_result.unit_test=success_unit_test
+            _process_and_save_test_results(source_dir, cls_source_code, cls_settings,
+                                 successful_test_result, passed_count, overall_error_msg)
             test_stats.append({
                 "filename": source_code_file,
                 "total_test_cases_passed": passed_count,
-                "total_test_cases": idx,
-                "percentage_passed (%)": (passed_count / idx * 100) if idx > 0 else 0.0,
+                "total_test_cases": total_test_case,
+                "percentage_passed (%)": (passed_count / total_test_case * 100) if total_test_case > 0 else 0.0,
                 "remarks": cls_test_cases.remarks
             })
-            _process_test_result(source_dir, cls_sourcecode, cls_settings,
-                                 success_unit_test, passed_count,overall_error_msg)
         test_stats_df = pd.DataFrame(test_stats)
         test_stats_df.index = test_stats_df.index + 1
         logger.info("\n" + tabulate(test_stats_df, headers='keys', tablefmt='grid'))
