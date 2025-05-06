@@ -90,12 +90,12 @@ class cls_Settings:
         self.llm_generate_unit_tests_prompt = os.getenv("LLM_GENERATE_UNIT_TESTS_PROMPT")
         self.llm_extract_import_prompt = os.getenv("LLM_EXTRACT_IMPORT_PROMPT")
         self.llm_unique_import_prompt = os.getenv("LLM_UNIQUE_IMPORT_PROMPT")
-        self.llm_resolve_orm_prompt = os.getenv("LLM_RESOLVE_ORM_PROMPT")
         self.llm_resolve_prompt = os.getenv("LLM_RESOLVE_PROMPT")
         self.llm_extract_pytest_fixture_prompt = os.getenv("LLM_EXTRACT_PYTEST_FIXTURE_PROMPT")
         self.llm_extract_test_cases_prompt = os.getenv("LLM_EXTRACT_TEST_CASES_PROMPT")
         self.llm_cleanup_prompt = os.getenv("LLM_CLEANUP_PROMPT")
         self.llm_merge_imports_prompt = os.getenv("LLM_MERGE_IMPORTS_PROMPT")
+        self.llm_organize_imports_prompt = os.getenv("LLM_ORGANIZE_IMPORTS_PROMPT")
         self.llm_merge_unittest_existing_imports_prompt = os.getenv("LLM_MERGE_UNITTEST_EXISTING_IMPORTS_PROMPT")
         
         self.requirements_txt = Path("./requirements.txt").read_text(encoding="utf-8")    
