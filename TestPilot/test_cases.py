@@ -151,7 +151,7 @@ class cls_Test_Cases:
 
 
     def _generates_test_cases(self, cls_source_code:cls_SourceCode, cls_setting:cls_Settings, 
-                              llm_prompt_executor):
+                              llm_prompt_executor)->str:
         if cls_setting.should_generate_tests:
             generated_unit_test_code= Path(cls_setting.unit_test_file).read_text(encoding="utf-8")
         else:
@@ -252,7 +252,6 @@ class cls_Test_Cases:
         cleaned_code = rewritten_code.replace(repeated_prefix, f"{top_level_pkg}.")
 
         return cleaned_code
-
 
     def derive_test_cases(self, cls_source_code:cls_SourceCode, cls_settings:cls_Settings) -> None:
         remarks=""
