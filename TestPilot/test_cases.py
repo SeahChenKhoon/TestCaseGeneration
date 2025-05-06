@@ -11,7 +11,7 @@ class cls_Test_Cases:
     def __init__(self):
         self.import_statement:str = ""
         self.pytest_fixtures:str = ""
-        self.unit_test = []
+        self.unit_test: List[str] = []
         self.remarks:str=""
 
     def _should_generate_unit_test(self,code: str) -> bool:
@@ -117,7 +117,7 @@ class cls_Test_Cases:
 
     def _derive_import_statements(self, llm_prompt_executor:LLMPromptExecutor, 
                                   cls_setting:cls_Settings, cls_source_code:cls_SourceCode, 
-                                  generated_unit_test_code:str):
+                                  generated_unit_test_code:str)->None:
 
         # Derive import statement from test_case
         llm_parameter = {"source_code": generated_unit_test_code}
@@ -151,7 +151,7 @@ class cls_Test_Cases:
 
 
     def _generates_test_cases(self, cls_source_code:cls_SourceCode, cls_setting:cls_Settings, 
-                              llm_prompt_executor)->str:
+                              llm_prompt_executor:LLMPromptExecutor)->str:
         if cls_setting.should_generate_tests:
             generated_unit_test_code= Path(cls_setting.unit_test_file).read_text(encoding="utf-8")
         else:
@@ -170,7 +170,7 @@ class cls_Test_Cases:
         return generated_unit_test_code
 
     def _derive_pytest_fixture(self, generated_unit_test_code:str, cls_setting:cls_Settings,
-                              llm_prompt_executor:LLMPromptExecutor):
+                              llm_prompt_executor:LLMPromptExecutor)->str:
         llm_parameter={"unit_test_code": generated_unit_test_code}
         pytest_fixtures = llm_prompt_executor.execute_llm_prompt(
             cls_setting.llm_extract_pytest_fixture_prompt, llm_parameter)
@@ -195,10 +195,10 @@ class cls_Test_Cases:
 
 
     def _extract_test_case_from_test_cases(
-        self, llm_prompt_executor,
-        prompt,
+        self, llm_prompt_executor:LLMPromptExecutor,
+        prompt:str,
         generated_unit_test_code: str
-    )->Union[str, List[str]]:
+    )->None:
         llm_parameter = {"unit_test_code": generated_unit_test_code}
         all_test_cases_str = llm_prompt_executor.execute_llm_prompt(
             prompt,
@@ -213,7 +213,7 @@ class cls_Test_Cases:
     
     def _build_unit_test_code(self, generated_unit_test_code: str, 
                              cls_source_code: cls_SourceCode, cls_setting:cls_Settings, 
-                             llm_prompt_executor:LLMPromptExecutor) -> Tuple[str]:
+                             llm_prompt_executor:LLMPromptExecutor) -> str:
         self._derive_import_statements(llm_prompt_executor, cls_setting, 
                                                           cls_source_code, generated_unit_test_code)
         pytest_fixtures = self._derive_pytest_fixture(generated_unit_test_code,cls_setting, llm_prompt_executor)
