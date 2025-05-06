@@ -79,7 +79,7 @@ class cls_Settings:
         self.model_name = os.getenv("MODEL_NAME")
         self.python_version = os.getenv("PYTHON_VERSION")
         self.max_num_tries = int(os.getenv("MAX_NUM_TRIES"))
-        self.should_generate_tests = int(os.getenv("SHOULD_GENERATE_TESTS", "0")) > 0
+        self.should_generate_tests = bool(int(os.getenv("SHOULD_GENERATE_TESTS", "1")))
         self.unit_test_file = os.getenv("UNIT_TEST_FILE")
         self.source_file = os.getenv("SOURCE_FILE")
         self.required_imports = os.getenv("REQUIRED_IMPORTS")
