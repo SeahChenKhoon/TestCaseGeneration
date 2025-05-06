@@ -5,7 +5,7 @@ from typing import NoReturn, List, Optional
 from pathlib import Path
 from tabulate import tabulate
 
-from TestPilot.common_helpers import cls_Settings, SaveFile, setup_logger
+from TestPilot.common_helpers import cls_Settings, SaveFile, LLMPromptExecutor, setup_logger
 from TestPilot.source_code import cls_SourceCode
 from TestPilot.test_cases import cls_Test_Cases
 from TestPilot.test_result import cls_TestResult
@@ -65,10 +65,16 @@ def _process_and_save_test_results(
     savefile = SaveFile(source_dir, cls_source_code.source_code_file_path)
 
     if passed_count > 0:
+        llm_prompt_executor = LLMPromptExecutor(cls_settings)
+        llm_parameter = {"full_unit_tests": successful_test_result.full_test_case}
+        successful_test_result.import_statement = llm_prompt_executor.execute_llm_prompt(
+                cls_settings.llm_organize_imports_prompt, llm_parameter)
         savefile.save_file(Path(cls_settings.finalized_tests_dir), successful_test_result.full_test_case)
-        is_passed, err_msg = successful_test_result.run_unit_test(cls_settings, cls_source_code)
+        is_passed, err_msg = successful_test_result.run_unit_test(successful_test_result.full_test_case, cls_settings, cls_source_code)
         if not is_passed:
-            logger.error(f"Error when compiling code - {err_msg}")
+            return f"Error in compilation - {err_msg}"
+        else:
+            return f"No Error in compilation"
 
     if overall_error_msg:
         savefile.save_file(
@@ -95,8 +101,7 @@ def save_initial_test_cases(
     ]
     
     full_test_case = "\n\n".join(test_case_parts) + "\n\n"
-
-    savefile.save_file(Path(cls_settings.generated_tests_dir), full_test_case)
+    savefile.save_file(Path(cls_settings.generated_tests_dir), full_test_case,prefix="init_")
 
 def create_successful_test_result(cls_test_cases: cls_Test_Cases) -> cls_TestResult:
     """
@@ -128,8 +133,10 @@ def main() -> NoReturn:
         test_stats=[]
         source_code_dir = _get_python_files(source_dir)
         for source_code_file in source_code_dir:
+            passed_count=0
             total_test_case=0
             overall_error_msg=""
+            successful_import_stmt=""
             success_unit_test=""
 
             cls_source_code = cls_SourceCode(source_code_file, cls_settings)
@@ -137,6 +144,8 @@ def main() -> NoReturn:
             successful_test_result=create_successful_test_result(cls_test_cases)
             save_initial_test_cases(source_dir, cls_source_code, cls_settings, cls_test_cases)
             for test_case_no, _ in enumerate(cls_test_cases.unit_test):
+                test_result_list: List[cls_TestResult]
+                error_msg_unit_case: Optional[str]
                 total_test_case=len(cls_test_cases.unit_test)
                 cls_test_result = cls_TestResult(test_case_no, cls_test_cases)
                 test_result_list, error_msg_unit_case = \
@@ -144,13 +153,15 @@ def main() -> NoReturn:
 
                 if test_result_list[-1].is_passed:
                     passed_count+=1
+                    successful_import_stmt+=test_result_list[-1].import_statement + "\n\n"
                     success_unit_test+=test_result_list[-1].unit_test + "\n\n"
                 else:
                     overall_error_msg+=error_msg_unit_case
 
+            successful_test_result.import_statement=successful_import_stmt
             successful_test_result.unit_test=success_unit_test
-            logger.info(f"Hello World - successful_test_result.unit_test - {successful_test_result.unit_test}")
-            _process_and_save_test_results(source_dir, cls_source_code, cls_settings,
+
+            cls_test_cases.remarks=_process_and_save_test_results(source_dir, cls_source_code, cls_settings,
                                  successful_test_result, passed_count, overall_error_msg)
             test_stats.append({
                 "filename": source_code_file,
