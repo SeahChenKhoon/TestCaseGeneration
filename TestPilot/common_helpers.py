@@ -84,21 +84,24 @@ class cls_Settings:
         self.source_file = os.getenv("SOURCE_FILE")
         self.required_imports = os.getenv("REQUIRED_IMPORTS")
         self.llm_temperature = float(os.getenv("LLM_TEMPERATURE"))
-        self.llm_classify_orm_prompt = os.getenv("LLM_CLASSIFY_ORM_PROMPT")
-        self.llm_format_test_code_prompt = os.getenv("LLM_FORMAT_TEST_CODE_PROMPT")
-        self.llm_test_orm_prompt = os.getenv("LLM_TEST_ORM_PROMPT")
-        self.llm_generate_unit_tests_prompt = os.getenv("LLM_GENERATE_UNIT_TESTS_PROMPT")
-        self.llm_extract_import_prompt = os.getenv("LLM_EXTRACT_IMPORT_PROMPT")
-        self.llm_unique_import_prompt = os.getenv("LLM_UNIQUE_IMPORT_PROMPT")
-        self.llm_resolve_prompt = os.getenv("LLM_RESOLVE_PROMPT")
-        self.llm_extract_pytest_fixture_prompt = os.getenv("LLM_EXTRACT_PYTEST_FIXTURE_PROMPT")
-        self.llm_extract_test_cases_prompt = os.getenv("LLM_EXTRACT_TEST_CASES_PROMPT")
-        self.llm_cleanup_prompt = os.getenv("LLM_CLEANUP_PROMPT")
-        self.llm_merge_imports_prompt = os.getenv("LLM_MERGE_IMPORTS_PROMPT")
-        self.llm_organize_imports_prompt = os.getenv("LLM_ORGANIZE_IMPORTS_PROMPT")
-        self.llm_merge_unittest_existing_imports_prompt = os.getenv("LLM_MERGE_UNITTEST_EXISTING_IMPORTS_PROMPT")
-        self.llm_merge_pytest_fixtures_prompt = os.getenv("LLM_MERGE_PYTEST_FIXTURES_PROMPT")
-        
+        self.llm_generate_unit_tests_prompt = os.getenv("LLM_GENERATE_UNIT_TESTS_PROMPT") + \
+            os.getenv("LLM_TRAILER")
+        self.llm_extract_import_prompt = os.getenv("LLM_EXTRACT_IMPORT_PROMPT") + \
+            os.getenv("LLM_TRAILER")
+        self.llm_resolve_prompt = os.getenv("LLM_RESOLVE_PROMPT") + \
+            os.getenv("LLM_TRAILER")
+        self.llm_extract_pytest_fixture_prompt = os.getenv("LLM_EXTRACT_PYTEST_FIXTURE_PROMPT") + \
+            os.getenv("LLM_TRAILER")
+        self.llm_extract_test_cases_prompt = os.getenv("LLM_EXTRACT_TEST_CASES_PROMPT") + \
+            os.getenv("LLM_TRAILER")
+        self.llm_merge_imports_prompt = os.getenv("LLM_MERGE_IMPORTS_PROMPT") + \
+            os.getenv("LLM_TRAILER")
+        self.llm_organize_imports_prompt = os.getenv("LLM_ORGANIZE_IMPORTS_PROMPT") + \
+            os.getenv("LLM_TRAILER")
+        self.llm_merge_unittest_existing_imports_prompt = \
+            os.getenv("LLM_MERGE_UNITTEST_EXISTING_IMPORTS_PROMPT") + os.getenv("LLM_TRAILER")
+        self.llm_merge_pytest_fixtures_prompt = os.getenv("LLM_MERGE_PYTEST_FIXTURES_PROMPT") + \
+            os.getenv("LLM_TRAILER")
         self.requirements_txt = Path("./requirements.txt").read_text(encoding="utf-8")    
 
 
