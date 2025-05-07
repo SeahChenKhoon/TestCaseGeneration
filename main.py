@@ -63,7 +63,8 @@ def _process_and_save_test_results(
     overall_error_msg: Optional[str] = None
 ) -> str:
     savefile = SaveFile(source_dir, cls_source_code.source_code_file_path)
-
+    is_passed:bool = False
+    err_msg:str=""
     if passed_count > 0:
         llm_prompt_executor = LLMPromptExecutor(cls_settings)
         llm_parameter = {"full_unit_tests": successful_test_result.full_test_case}
@@ -90,18 +91,20 @@ def save_initial_test_cases(
     cls_settings: cls_Settings,
     cls_test_cases: cls_Test_Cases
 ) -> None:
-    savefile = SaveFile(source_dir, cls_source_code.source_code_file_path)
 
-    test_case_parts = [
-        cls_test_cases.import_statement,
-        "",
-        cls_test_cases.pytest_fixtures,
-        "",
-        *cls_test_cases.unit_test
-    ]
-    
-    full_test_case = "\n\n".join(test_case_parts) + "\n\n"
-    savefile.save_file(Path(cls_settings.generated_tests_dir), full_test_case,prefix="init_")
+    if len(cls_test_cases.unit_test) > 0:
+        savefile = SaveFile(source_dir, cls_source_code.source_code_file_path)
+
+        test_case_parts = [
+            cls_test_cases.import_statement,
+            "",
+            cls_test_cases.pytest_fixtures,
+            "",
+            *cls_test_cases.unit_test
+        ]
+        
+        full_test_case = "\n\n".join(test_case_parts) + "\n\n"
+        savefile.save_file(Path(cls_settings.generated_tests_dir), full_test_case,prefix="init_")
 
 def create_successful_test_result(cls_test_cases: cls_Test_Cases) -> cls_TestResult:
     """
