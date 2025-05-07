@@ -85,26 +85,6 @@ def _process_and_save_test_results(
     else:
         return f"No Error in compilation"
 
-def save_initial_test_cases(
-    source_dir: str,
-    cls_source_code: cls_SourceCode,
-    cls_settings: cls_Settings,
-    cls_test_cases: cls_Test_Cases
-) -> None:
-
-    if len(cls_test_cases.unit_test) > 0:
-        savefile = SaveFile(source_dir, cls_source_code.source_code_file_path)
-
-        test_case_parts = [
-            cls_test_cases.import_statement,
-            "",
-            cls_test_cases.pytest_fixtures,
-            "",
-            *cls_test_cases.unit_test
-        ]
-        
-        full_test_case = "\n\n".join(test_case_parts) + "\n\n"
-        savefile.save_file(Path(cls_settings.generated_tests_dir), full_test_case,prefix="init_")
 
 def create_successful_test_result(cls_test_cases: cls_Test_Cases) -> cls_TestResult:
     """
@@ -143,10 +123,9 @@ def main() -> None:
             success_unit_test=""
 
             cls_source_code = cls_SourceCode(source_code_file, cls_settings)
-            cls_test_cases.derive_test_cases(cls_source_code, cls_settings)
+            cls_test_cases.derive_test_cases(source_dir, cls_source_code, cls_settings)
             if not cls_test_cases.remarks:
                 successful_test_result=create_successful_test_result(cls_test_cases)
-                save_initial_test_cases(source_dir, cls_source_code, cls_settings, cls_test_cases)
                 for test_case_no, _ in enumerate(cls_test_cases.unit_test):
                     test_result_list: List[cls_TestResult]
                     error_msg_unit_case: Optional[str]
