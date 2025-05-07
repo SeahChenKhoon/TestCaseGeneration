@@ -14,3 +14,6 @@ unit_test.py
 # Ignore everything in tests and theory_evaluation except tracked files
 tests/
 theory_evaluation/
+theory_evaluation_basic/
+*.toml
+uv.lock
