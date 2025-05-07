@@ -76,7 +76,9 @@ class cls_TestResult(cls_Test_Cases):
         output+=f"\n{self.full_test_case.strip()}\n"
         output+=f"{divider}\n"
         if not self.is_passed:
-            output+=f"Error: \n{self.error_msg}\n"
+            output+=f"Error: \n"
+            output+=f"{divider}\n"
+            output+=f"{self.error_msg}\n"
             output+=f"{divider}\n"
         return output
         
