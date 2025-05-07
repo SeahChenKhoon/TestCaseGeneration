@@ -61,7 +61,7 @@ def _process_and_save_test_results(
     successful_test_result:cls_TestResult,
     passed_count: int,
     overall_error_msg: Optional[str] = None
-) -> None:
+) -> str:
     savefile = SaveFile(source_dir, cls_source_code.source_code_file_path)
 
     if passed_count > 0:
@@ -71,10 +71,6 @@ def _process_and_save_test_results(
                 cls_settings.llm_organize_imports_prompt, llm_parameter)
         savefile.save_file(Path(cls_settings.finalized_tests_dir), successful_test_result.full_test_case)
         is_passed, err_msg = successful_test_result.run_unit_test(successful_test_result.full_test_case, cls_settings, cls_source_code)
-        if not is_passed:
-            return f"Error in compilation - {err_msg}"
-        else:
-            return f"No Error in compilation"
 
     if overall_error_msg:
         savefile.save_file(
@@ -83,6 +79,10 @@ def _process_and_save_test_results(
             prefix="err_",
             file_extension=".log"
         )
+    if not is_passed:
+        return f"Error in compilation - {err_msg}"
+    else:
+        return f"No Error in compilation"
 
 def save_initial_test_cases(
     source_dir: str,
