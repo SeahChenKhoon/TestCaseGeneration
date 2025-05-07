@@ -144,29 +144,30 @@ def main() -> None:
 
             cls_source_code = cls_SourceCode(source_code_file, cls_settings)
             cls_test_cases.derive_test_cases(cls_source_code, cls_settings)
-            successful_test_result=create_successful_test_result(cls_test_cases)
-            save_initial_test_cases(source_dir, cls_source_code, cls_settings, cls_test_cases)
-            for test_case_no, _ in enumerate(cls_test_cases.unit_test):
-                test_result_list: List[cls_TestResult]
-                error_msg_unit_case: Optional[str]
-                total_test_case=len(cls_test_cases.unit_test)
-                cls_test_result = cls_TestResult(test_case_no, cls_test_cases)
+            if not cls_test_cases.remarks:
+                successful_test_result=create_successful_test_result(cls_test_cases)
+                save_initial_test_cases(source_dir, cls_source_code, cls_settings, cls_test_cases)
+                for test_case_no, _ in enumerate(cls_test_cases.unit_test):
+                    test_result_list: List[cls_TestResult]
+                    error_msg_unit_case: Optional[str]
+                    total_test_case=len(cls_test_cases.unit_test)
+                    cls_test_result = cls_TestResult(test_case_no, cls_test_cases)
 
-                test_result_list, error_msg_unit_case = \
-                    cls_test_result.process_test_cases(cls_settings, cls_source_code)
+                    test_result_list, error_msg_unit_case = \
+                        cls_test_result.process_test_cases(cls_settings, cls_source_code)
 
-                if test_result_list[-1].is_passed:
-                    passed_count+=1
-                    successful_import_stmt+=test_result_list[-1].import_statement + "\n\n"
-                    success_unit_test+=test_result_list[-1].unit_test + "\n\n"
-                else:
-                    overall_error_msg+=error_msg_unit_case
+                    if test_result_list[-1].is_passed:
+                        passed_count+=1
+                        successful_import_stmt+=test_result_list[-1].import_statement + "\n\n"
+                        success_unit_test+=test_result_list[-1].unit_test + "\n\n"
+                    else:
+                        overall_error_msg+=error_msg_unit_case
 
-            successful_test_result.import_statement=successful_import_stmt
-            successful_test_result.unit_test=success_unit_test
+                successful_test_result.import_statement=successful_import_stmt
+                successful_test_result.unit_test=success_unit_test
 
-            cls_test_cases.remarks=_process_and_save_test_results(source_dir, cls_source_code, cls_settings,
-                                 successful_test_result, passed_count, overall_error_msg)
+                cls_test_cases.remarks=_process_and_save_test_results(source_dir, cls_source_code, cls_settings,
+                                    successful_test_result, passed_count, overall_error_msg)
             test_stats.append({
                 "filename": source_code_file,
                 "total_test_cases_passed": passed_count,
