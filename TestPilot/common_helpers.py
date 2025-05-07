@@ -97,6 +97,7 @@ class cls_Settings:
         self.llm_merge_imports_prompt = os.getenv("LLM_MERGE_IMPORTS_PROMPT")
         self.llm_organize_imports_prompt = os.getenv("LLM_ORGANIZE_IMPORTS_PROMPT")
         self.llm_merge_unittest_existing_imports_prompt = os.getenv("LLM_MERGE_UNITTEST_EXISTING_IMPORTS_PROMPT")
+        self.llm_merge_pytest_fixtures_prompt = os.getenv("LLM_MERGE_PYTEST_FIXTURES_PROMPT")
         
         self.requirements_txt = Path("./requirements.txt").read_text(encoding="utf-8")    
 
@@ -198,5 +199,4 @@ class LLMPromptExecutor:
         formatted_prompt = llm_import_prompt.format(**llm_parameter)
         response = self._get_chat_completion(self.provider, self.model_arg, formatted_prompt, self.llm_temperature)
         return self._strip_markdown_fences(response.choices[0].message.content.strip())
-    
     
