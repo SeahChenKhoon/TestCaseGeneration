@@ -202,14 +202,22 @@ class cls_Test_Cases:
     
     def _build_unit_test_code(self, generated_unit_test_code: str, 
                              cls_source_code: cls_SourceCode, cls_setting:cls_Settings, 
-                             llm_prompt_executor:LLMPromptExecutor) -> str:
+                             llm_prompt_executor:LLMPromptExecutor) -> None:
         self._derive_import_statements(llm_prompt_executor, cls_setting, 
                                                           cls_source_code, generated_unit_test_code)
         pytest_fixtures = self._derive_pytest_fixture(generated_unit_test_code,cls_setting, llm_prompt_executor)
+        if self.pytest_fixtures and pytest_fixtures:
+            llm_parameter = {"initial_pytest_fixtures": self.pytest_fixtures, 
+                            "new_pytest_fixtures": pytest_fixtures
+                            }
+            self.pytest_fixtures = llm_prompt_executor.execute_llm_prompt(
+                cls_setting.llm_merge_pytest_fixtures_prompt, llm_parameter)
+        else:
+            self.pytest_fixtures=pytest_fixtures
         self._extract_test_case_from_test_cases(llm_prompt_executor, 
                                                cls_setting.llm_extract_test_cases_prompt, 
                                                 generated_unit_test_code)
-        return pytest_fixtures
+
 
     def _rewrite_module_references(self, source_code_path: str, source_code: str) -> str:
         """
@@ -250,10 +258,9 @@ class cls_Test_Cases:
             generated_unit_test_code = self._generates_test_cases(cls_source_code, cls_settings, 
                                                                   llm_prompt_executor)
             # Build unit test component
-            pytest_fixtures = self._build_unit_test_code(generated_unit_test_code,
+            self._build_unit_test_code(generated_unit_test_code,
                                                             cls_source_code, cls_settings, 
                                                             llm_prompt_executor)
-            self.pytest_fixtures=pytest_fixtures
             self.remarks = ""
         else:
             self.remarks = "Skipped (config/models/imports only)"
