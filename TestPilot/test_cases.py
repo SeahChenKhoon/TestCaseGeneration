@@ -3,7 +3,7 @@ from pathlib import Path
 import re, os
 
 from TestPilot.source_code import cls_SourceCode
-from TestPilot.common_helpers import cls_Settings, LLMPromptExecutor, setup_logger
+from TestPilot.common_helpers import cls_Settings, LLMPromptExecutor, setup_logger, SaveFile
 
 logger = setup_logger()
 
@@ -209,7 +209,7 @@ class cls_Test_Cases:
 
         if self.pytest_fixtures and pytest_fixtures:
             logger.info(f"Hello World - Current pytest_fixtures - {self.pytest_fixtures}")
-            logger.info(f"Hello World - New pytest_fixtures - {self.pytest_fixtures}")            
+            logger.info(f"Hello World - New pytest_fixtures - {pytest_fixtures}")            
             llm_parameter = {"initial_pytest_fixtures": self.pytest_fixtures, 
                             "new_pytest_fixtures": pytest_fixtures
                             }
@@ -254,13 +254,15 @@ class cls_Test_Cases:
 
         return cleaned_code
 
-    def derive_test_cases(self, cls_source_code:cls_SourceCode, cls_settings:cls_Settings) -> None:
+    def derive_test_cases(self, source_dir:Path, cls_source_code:cls_SourceCode, cls_settings:cls_Settings) -> None:
         remarks=""
         if self._should_generate_unit_test(cls_source_code.source_code):
             llm_prompt_executor = LLMPromptExecutor(cls_settings)
             # Generates Test Cases
             generated_unit_test_code = self._generates_test_cases(cls_source_code, cls_settings, 
                                                                   llm_prompt_executor)
+            savefile = SaveFile(source_dir, cls_source_code.source_code_file_path)
+            savefile.save_file(Path(cls_settings.generated_tests_dir), generated_unit_test_code,"init_")            
             # Build unit test component
             self._build_unit_test_code(generated_unit_test_code,
                                                             cls_source_code, cls_settings, 
