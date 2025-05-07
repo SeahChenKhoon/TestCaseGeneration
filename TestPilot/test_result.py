@@ -8,7 +8,7 @@ from TestPilot.test_cases import cls_Test_Cases
 
 logger = setup_logger()
 
-class cls_TestResult():
+class cls_TestResult(cls_Test_Cases):
     def __init__(self, test_case_no:int, cls_test_cases:cls_Test_Cases):
         self.import_statement:str = cls_test_cases.import_statement
         self.pytest_fixtures:str = cls_test_cases.pytest_fixtures
@@ -52,6 +52,7 @@ class cls_TestResult():
             "test_case": self.unit_test,
             "test_case_error": self.error_msg,
             "requirements_txt": cls_source_code.requirements_txt,
+            "module_path": cls_source_code.module_path
         }
         full_unit_test = llm_prompt_executor.execute_llm_prompt(cls_settings.llm_resolve_prompt, 
                                                                 llm_parameter)
@@ -65,16 +66,18 @@ class cls_TestResult():
 
         output="\n"
         output+=f"\n{divider}\n"
-        output+=f"TEST CASE {self.test_case_no+1} - Retry {retry_count}\n"
         output+=f"File: {file_path}\n"
-        output+=f"Status: {'Passed' if self.is_passed == True else 'Failed'}\n"
-        if not self.is_passed:
-            output+=f"Error: \n{self.error_msg}\n"
+        output+=f"TEST CASE {self.test_case_no+1} - Retry {retry_count} - " \
+            f"({'Passed' if self.is_passed == True else 'Failed'})\n"
+        output+=f"\n"
         output+=f"{section_break}\n"
         output+="Unit Test Code:\n"
         output+=f"{section_break}\n"
         output+=f"\n{self.full_test_case.strip()}\n"
         output+=f"{divider}\n"
+        if not self.is_passed:
+            output+=f"Error: \n{self.error_msg}\n"
+            output+=f"{divider}\n"
         return output
         
     def _ensure_import_statements(self) -> None:
@@ -103,14 +106,12 @@ class cls_TestResult():
             test_report=self._print_test_result(retry_count, cls_source_code.source_code_file_path)
             logger.info(test_report)
             overall_error_msg+=test_report
+ 
             test_result_list.append(self)
 
             if not self.is_passed:
                 retry_count += 1
                 full_unit_test = self._resolve_unit_test_error(cls_source_code, cls_settings)
-                full_unit_test = self._rewrite_module_references(
-                    cls_source_code.source_code_file_path,
-                    full_unit_test)
                 llm_prompt_executor = LLMPromptExecutor(cls_settings)
                 self._build_unit_test_code(full_unit_test, cls_source_code, cls_settings, 
                                                llm_prompt_executor)
