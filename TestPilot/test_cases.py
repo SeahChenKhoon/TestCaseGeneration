@@ -129,13 +129,6 @@ class cls_Test_Cases:
             llm_parameter = {"source_code": cls_source_code.source_code}
             source_code_import_statements = llm_prompt_executor.execute_llm_prompt(
                 cls_setting.llm_extract_import_prompt, llm_parameter)
-            source_code_import_statements = self._convert_relative_to_absolute_imports(
-                source_code_import_statements, cls_source_code.source_code_file_path)
-            function_names = self._extract_function_class_and_factory_assignments(
-                cls_source_code.source_code)
-            dynamic_imports = self._construct_module_import(function_names, 
-                                                        cls_source_code.source_code_file_path)
-            source_code_import_statements += "\n" + dynamic_imports + "\n"
 
             # Merge the source code and unit test import statements together
             llm_parameter = {"source_code_import_statements": source_code_import_statements,
@@ -162,11 +155,7 @@ class cls_Test_Cases:
                             }
             generated_unit_test_code = llm_prompt_executor.execute_llm_prompt(
                 cls_setting.llm_generate_unit_tests_prompt, llm_parameter)
-            generated_unit_test_code = self._convert_relative_to_absolute_imports(
-                generated_unit_test_code, cls_source_code.source_code_file_path)
-            generated_unit_test_code = self._rewrite_module_references(
-                cls_source_code.source_code_file_path,
-                generated_unit_test_code)
+
         return generated_unit_test_code
 
     def _derive_pytest_fixture(self, generated_unit_test_code:str, cls_setting:cls_Settings,
