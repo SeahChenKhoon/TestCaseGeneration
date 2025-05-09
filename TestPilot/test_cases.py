@@ -155,7 +155,6 @@ class cls_Test_Cases:
                             }
             generated_unit_test_code = llm_prompt_executor.execute_llm_prompt(
                 cls_setting.llm_generate_unit_tests_prompt, llm_parameter)
-
         return generated_unit_test_code
 
     def _derive_pytest_fixture(self, generated_unit_test_code:str, cls_setting:cls_Settings,
@@ -208,14 +207,11 @@ class cls_Test_Cases:
         pytest_fixtures = self._derive_pytest_fixture(generated_unit_test_code,cls_setting, llm_prompt_executor)
 
         if self.pytest_fixtures and pytest_fixtures:
-            logger.info(f"Hello World - Current pytest_fixtures - {self.pytest_fixtures}")
-            logger.info(f"Hello World - New pytest_fixtures - {pytest_fixtures}")            
             llm_parameter = {"initial_pytest_fixtures": self.pytest_fixtures, 
                             "new_pytest_fixtures": pytest_fixtures
                             }
             self.pytest_fixtures = llm_prompt_executor.execute_llm_prompt(
                 cls_setting.llm_merge_pytest_fixtures_prompt, llm_parameter)
-            logger.info(f"Hello World - Improved pytest_fixtures - {self.pytest_fixtures}")
         else:
             self.pytest_fixtures=pytest_fixtures
         self._extract_test_case_from_test_cases(llm_prompt_executor, 
