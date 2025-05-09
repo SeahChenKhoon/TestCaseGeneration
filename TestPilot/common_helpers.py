@@ -102,7 +102,7 @@ class cls_Settings:
             os.getenv("LLM_MERGE_UNITTEST_EXISTING_IMPORTS_PROMPT") + os.getenv("LLM_TRAILER")
         self.llm_merge_pytest_fixtures_prompt = os.getenv("LLM_MERGE_PYTEST_FIXTURES_PROMPT") + \
             os.getenv("LLM_TRAILER")
-        self.requirements_txt = Path("./requirements.txt").read_text(encoding="utf-8")    
+        self.requirements_txt = Path(os.getenv("REQUIREMENTS_TXT")).read_text(encoding="utf-8")    
 
 
 class LLMPromptExecutor:
