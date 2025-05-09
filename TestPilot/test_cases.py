@@ -129,6 +129,9 @@ class cls_Test_Cases:
             llm_parameter = {"source_code": cls_source_code.source_code}
             source_code_import_statements = llm_prompt_executor.execute_llm_prompt(
                 cls_setting.llm_extract_import_prompt, llm_parameter)
+            
+            source_code_import_statements = self._convert_relative_to_absolute_imports(  
+                source_code_import_statements, cls_source_code.source_code_file_path)  
 
             # Merge the source code and unit test import statements together
             llm_parameter = {"source_code_import_statements": source_code_import_statements,
