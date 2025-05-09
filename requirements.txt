@@ -8,3 +8,4 @@ SQLAlchemy==2.0.40
 psycopg2==2.9.10
 PyYAML
 fastapi==0.115.12
+pydantic[email]
