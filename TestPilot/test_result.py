@@ -74,12 +74,13 @@ class cls_TestResult(cls_Test_Cases):
         output+="Unit Test Code:\n"
         output+=f"{section_break}\n"
         output+=f"\n{self.full_test_case.strip()}\n"
-        output+=f"{divider}\n"
         if not self.is_passed:
+            output+="\n"
+            output+=f"{section_break}\n"
             output+=f"Error: \n"
-            output+=f"{divider}\n"
+            output+=f"{section_break}\n"
             output+=f"{self.error_msg}\n"
-            output+=f"{divider}\n"
+        output+=f"{divider}\n"
         return output
         
     def _ensure_import_statements(self) -> None:
