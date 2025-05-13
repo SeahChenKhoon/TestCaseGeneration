@@ -1,7 +1,7 @@
 import shutil
 import pandas as pd
 
-from typing import List, Optional
+from typing import List, Optional, Tuple
 from pathlib import Path
 from tabulate import tabulate
 
@@ -43,15 +43,32 @@ def _get_python_files(directory: str) -> List[Path]:
     Returns:
         List[Path]: A list of Path objects representing all found .py files.
     """
-    return list(Path(directory).rglob("*.py"))
+    # Initialisation
+    passed_count=0
+    test_stats=[]
+    return list(Path(directory).rglob("*.py")), passed_count, test_stats
 
 
-def _run_initial_setup()->cls_Settings:
-    # Read Settings
+def _run_initial_setup() -> Tuple[cls_Settings, List[str], cls_Test_Cases]:
+    """
+    Performs the initial setup for the test case generation process.
+
+    This includes:
+    - Initializing the settings object.
+    - Cleaning up the test environment.
+    - Parsing the source directory list from settings.
+    - Initializing the test case holder object.
+
+    Returns:
+        Tuple[cls_Settings, List[str], cls_Test_Cases]: A tuple containing the
+        settings object, a list of source directory paths, and the test case container.
+    """
     cls_settings = cls_Settings()
-    # Read Housekeep Prcocessing Folders
     _clean_test_environment(cls_settings)
-    return cls_settings
+    source_dir_list = [path.strip() for path in cls_settings.source_dir_str.split(",") if path]
+    cls_test_cases = cls_Test_Cases()
+    
+    return cls_settings, source_dir_list, cls_test_cases
 
 
 def _process_and_save_test_results(
@@ -86,61 +103,38 @@ def _process_and_save_test_results(
         return f"No Error in compilation"
 
 
-def create_successful_test_result(cls_test_cases: cls_Test_Cases) -> cls_TestResult:
-    """
-    Creates a successful cls_TestResult object based on given cls_Test_Cases.
+def init_test_result(cls_test_cases: cls_Test_Cases) -> cls_TestResult:
+    test_case = cls_Test_Cases()
+    test_case.import_statement = cls_test_cases.import_statement
+    test_case.pytest_fixtures = cls_test_cases.pytest_fixtures
+    test_case.unit_test = [""]  
 
-    Args:
-        cls_test_cases (cls_Test_Cases): Source test cases object.
-
-    Returns:
-        cls_TestResult: A successful test result object.
-    """
-    success_test_case = cls_Test_Cases()
-    success_test_case.import_statement = cls_test_cases.import_statement
-    success_test_case.pytest_fixtures = cls_test_cases.pytest_fixtures
-    success_test_case.unit_test = [""]  
-
-    successful_test_result = cls_TestResult(0, success_test_case)
-    return successful_test_result
+    test_result = cls_TestResult(0, test_case)
+    return test_result
 
 
 def main() -> None:
-    cls_settings = _run_initial_setup() 
-    source_dir_list = [path.strip() for path in cls_settings.source_dir_str.split(",") if path]
-    cls_test_cases = cls_Test_Cases()
-
+    cls_settings, source_dir_list, cls_test_cases = _run_initial_setup() 
     for source_dir in source_dir_list:
         logger.info(f"Executing directory {source_dir}... ")
-        passed_count=0
-        test_stats=[]
-        source_code_dir = _get_python_files(source_dir)
+        source_code_dir, passed_count, test_stats = _get_python_files(source_dir)
+        source_code_file:Path
         for source_code_file in source_code_dir:
-            passed_count=0
-            total_test_case=0
-            overall_error_msg=""
-            successful_import_stmt=""
-            success_unit_test=""
-
-            cls_source_code = cls_SourceCode(source_code_file, cls_settings)
-            cls_test_cases.derive_test_cases(source_dir, cls_source_code, cls_settings)
+            cls_test_cases = cls_Test_Cases()
+            
+            passed_count, overall_error_msg, successful_import_stmt,\
+            success_unit_test, cls_source_code=cls_test_cases.init_variables(source_code_file, \
+                                                                             cls_settings)
+            total_test_case = cls_test_cases.derive_test_cases(source_dir, cls_source_code, 
+                                                               cls_settings)
             if not cls_test_cases.remarks:
-                successful_test_result=create_successful_test_result(cls_test_cases)
+                successful_test_result:cls_TestResult=init_test_result(cls_test_cases)
                 for test_case_no, _ in enumerate(cls_test_cases.unit_test):
-                    test_result_list: List[cls_TestResult]
-                    error_msg_unit_case: Optional[str]
-                    total_test_case=len(cls_test_cases.unit_test)
-                    cls_test_result = cls_TestResult(test_case_no, cls_test_cases)
-
-                    test_result_list, error_msg_unit_case = \
-                        cls_test_result.process_test_cases(cls_settings, cls_source_code)
-
-                    if test_result_list[-1].is_passed:
-                        passed_count+=1
-                        successful_import_stmt+=test_result_list[-1].import_statement + "\n\n"
-                        success_unit_test+=test_result_list[-1].unit_test + "\n\n"
-                    else:
-                        overall_error_msg+=error_msg_unit_case
+                    test_result=cls_TestResult(test_case_no, cls_test_cases)
+                    overall_error_msg, success_unit_test, successful_import_stmt, is_passed=\
+                        test_result.process_single_test_case_and_accumulate_results(cls_test_cases,\
+                            test_case_no, cls_settings,cls_source_code)
+                    passed_count+=is_passed
 
                 successful_test_result.import_statement=successful_import_stmt
                 successful_test_result.unit_test=success_unit_test
