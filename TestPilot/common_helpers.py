@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Optional, Union
 from dotenv import load_dotenv
 from openai import OpenAI, AzureOpenAI
 import logging
@@ -44,12 +44,32 @@ def setup_logger(name: str = "TestPilot") -> logging.Logger:
 
     return logger
 
+
 class SaveFile:
     def __init__(self, source_dir, original_path):
         self.source_dir = source_dir
         self.original_path = original_path
 
-    def save_file(self, target_dir, file_content, prefix = "test_", file_extension: Optional[str] = ".py"):
+    def save_file(
+        self,
+        target_dir: Union[str, Path],
+        file_content: str,
+        prefix: str = "test_",
+        file_extension: Optional[str] = ".py"
+    ) -> Path:
+        """
+        Saves the given file content to a new path derived from the original file path,
+        using the given target directory, prefix, and file extension.
+
+        Args:
+            target_dir (Union[str, Path]): Directory where the file should be saved.
+            file_content (str): The content to be written to the file.
+            prefix (str, optional): Prefix for the new filename. Defaults to "test_".
+            file_extension (Optional[str], optional): File extension to use. Defaults to ".py".
+
+        Returns:
+            Path: The full path to the saved file.
+        """
         relative_path = self.original_path.relative_to(self.source_dir)
         new_name = f"{prefix}{relative_path.stem}"
         transformed_path = Path(target_dir) / relative_path.parent / new_name
@@ -59,7 +79,8 @@ class SaveFile:
 
         transformed_path.parent.mkdir(parents=True, exist_ok=True)
         transformed_path.write_text(file_content, encoding="utf-8")
-        return "transformed_path"                        
+
+        return transformed_path        
 
 class cls_Settings:
     def __init__(self):
@@ -122,7 +143,21 @@ class LLMPromptExecutor:
         self.llm_temperature=cls_setting.llm_temperature
 
 
-    def _get_llm_client(self, env_vars):
+    def _get_llm_client(self, env_vars: Any) -> Any:
+        """
+        Returns an LLM client instance based on the provider specified in the environment variables.
+
+        Supports 'azure' (AzureOpenAI) and 'openai' (OpenAI). Raises an error for unsupported providers.
+
+        Args:
+            env_vars (Any): An object containing environment variables such as provider name, API keys, etc.
+
+        Returns:
+            Any: An instance of either AzureOpenAI or OpenAI depending on the provider.
+
+        Raises:
+            ValueError: If the provider is not 'openai' or 'azure'.
+        """
         provider = env_vars.llm_provider.lower()
 
         if provider == "azure":
@@ -133,11 +168,35 @@ class LLMPromptExecutor:
             )
 
         if provider == "openai":
-            openai_key = env_vars.openai_api_key
-            return OpenAI(api_key=openai_key)
+            return OpenAI(api_key=env_vars.openai_api_key)
+
         raise ValueError(f"Unsupported provider: '{provider}'. Expected 'openai' or 'azure'.")
 
-    def _get_model_arguments(self, provider: str, model_name: str = "", azure_deployment_id: str = "") -> str:
+
+    def _get_model_arguments(
+        self,
+        provider: str,
+        model_name: str = "",
+        azure_deployment_id: str = ""
+    ) -> str:
+        """
+        Returns the appropriate model argument based on the LLM provider.
+
+        For 'azure', it returns the Azure deployment ID.  
+        For 'openai', it returns the OpenAI model name.  
+        Raises an error if required arguments are missing or if the provider is unsupported.
+
+        Args:
+            provider (str): LLM provider name (e.g., 'openai' or 'azure').
+            model_name (str, optional): Model name for OpenAI. Required if provider is 'openai'.
+            azure_deployment_id (str, optional): Deployment ID for Azure. Required if provider is 'azure'.
+
+        Returns:
+            str: The resolved model identifier (either `model_name` or `azure_deployment_id`).
+
+        Raises:
+            ValueError: If required parameters are missing or provider is unsupported.
+        """
         provider = provider.lower()
 
         if provider == "azure":
@@ -172,6 +231,7 @@ class LLMPromptExecutor:
             temperature=llm_temperature,
         )
 
+
     def _strip_markdown_fences(self, text: str) -> str:
         """
         Removes all Markdown-style triple backtick fences from LLM output.
@@ -194,12 +254,29 @@ class LLMPromptExecutor:
 
         return "\n".join(cleaned_lines)
 
-    def execute_llm_prompt( 
+
+    def execute_llm_prompt(
         self,
         llm_import_prompt: str,
-        llm_parameter: dict,
+        llm_parameter: dict
     ) -> str:
+        """
+        Formats the given prompt with provided parameters, sends it to the LLM,
+        and returns the cleaned response content without Markdown fences.
+
+        Args:
+            llm_import_prompt (str): The base prompt template to send to the LLM.
+            llm_parameter (dict): Dictionary of parameters to format into the prompt.
+
+        Returns:
+            str: The LLM-generated string response with formatting artifacts removed.
+        """
         formatted_prompt = llm_import_prompt.format(**llm_parameter)
-        response = self._get_chat_completion(self.provider, self.model_arg, formatted_prompt, self.llm_temperature)
+        response = self._get_chat_completion(
+            self.provider,
+            self.model_arg,
+            formatted_prompt,
+            self.llm_temperature
+        )
         return self._strip_markdown_fences(response.choices[0].message.content.strip())
     
