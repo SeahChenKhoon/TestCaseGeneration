@@ -200,6 +200,10 @@ class cls_Test_Cases:
                 cls_source_code.source_code_file_path
             )
 
+            function_names = self._extract_function_class_and_factory_assignments(cls_source_code.source_code)
+            dynamic_imports = self._construct_module_import(function_names, cls_source_code.source_code_file_path)            
+            source_code_import_statements += "\n" + dynamic_imports + "\n"
+
             # Step 3: Merge source code and unit test imports
             llm_parameter = {
                 "source_code_import_statements": source_code_import_statements,
