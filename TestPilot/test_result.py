@@ -6,6 +6,7 @@ from TestPilot.common_helpers import cls_Settings, LLMPromptExecutor, SaveFile, 
 from TestPilot.source_code import cls_SourceCode
 from TestPilot.test_cases import cls_Test_Cases
 
+
 logger = setup_logger()
 
 class cls_TestResult(cls_Test_Cases):
@@ -96,6 +97,28 @@ class cls_TestResult(cls_Test_Cases):
             if (keyword in self.unit_test or keyword in self.pytest_fixtures) and \
                 import_line not in self.import_statement:
                 self.import_statement += f"\n{import_line}"
+
+
+    def process_single_test_case_and_accumulate_results(
+            self, cls_test_cases:cls_Test_Cases, test_case_no:int, cls_settings:cls_Settings, 
+            cls_source_code:cls_SourceCode):
+        is_passed=0
+        overall_error_msg=""
+        successful_import_stmt=""
+        success_unit_test=""
+        test_result_list: List[cls_TestResult]=[]
+        error_msg_unit_case: Optional[str]
+        cls_test_result = cls_TestResult(test_case_no, cls_test_cases)
+        test_result_list, error_msg_unit_case = \
+            cls_test_result.process_test_cases(cls_settings, cls_source_code)
+
+        if test_result_list[-1].is_passed:
+            is_passed+=1
+            successful_import_stmt+=test_result_list[-1].import_statement + "\n\n"
+            success_unit_test+=test_result_list[-1].unit_test + "\n\n"
+        else:
+            overall_error_msg+=error_msg_unit_case
+        return overall_error_msg, success_unit_test, successful_import_stmt, is_passed
 
 
     def process_test_cases(self, cls_settings:cls_Settings,  
