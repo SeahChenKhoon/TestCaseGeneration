@@ -201,6 +201,7 @@ class cls_Test_Cases:
             self.unit_test=all_test_cases_list
         else:
             self.unit_test=all_test_cases_list[0]
+            
     
     def _build_unit_test_code(self, generated_unit_test_code: str, 
                              cls_source_code: cls_SourceCode, cls_setting:cls_Settings, 
@@ -253,6 +254,18 @@ class cls_Test_Cases:
 
         return cleaned_code
 
+    def init_variables(self, source_code_file:str, cls_settings:cls_Settings):
+        # Initialisation
+        passed_count=0
+        total_test_case=0
+        overall_error_msg=""
+        successful_import_stmt=""
+        success_unit_test=""
+        cls_source_code = cls_SourceCode(source_code_file, cls_settings)
+        return passed_count,overall_error_msg, successful_import_stmt,\
+            success_unit_test, cls_source_code
+
+
     def derive_test_cases(self, source_dir:Path, cls_source_code:cls_SourceCode, cls_settings:cls_Settings) -> None:
         remarks=""
         if self._should_generate_unit_test(cls_source_code.source_code):
@@ -272,3 +285,4 @@ class cls_Test_Cases:
             logger.warning(f"Skipping unit test generation for " 
                            f"{cls_source_code.source_code_file_path}" 
                            " as it only contains configuration, models, or pure imports.")
+        return len(self.unit_test)
